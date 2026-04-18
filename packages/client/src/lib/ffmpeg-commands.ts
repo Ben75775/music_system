@@ -1,9 +1,9 @@
-import type { Track } from 'shared/types';
+import type { Clip } from 'shared/types';
 
 /**
  * Build FFmpeg arguments for processing a track with all its effects.
  */
-export function buildFFmpegArgs(track: Track): string[] {
+export function buildFFmpegArgs(track: Clip): string[] {
   const args: string[] = [];
   const filters: string[] = [];
 
@@ -79,6 +79,6 @@ export function buildFFmpegArgs(track: Track): string[] {
 /**
  * Get output file extension based on track type.
  */
-export function getOutputName(track: Track): string {
+export function getOutputName(track: Clip): string {
   return track.type === 'audio' ? 'output.mp3' : 'output.mp4';
 }

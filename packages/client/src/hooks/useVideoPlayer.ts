@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { Track, EQPreset } from 'shared/types';
+import type { Clip, EQPreset } from 'shared/types';
 
 /** EQ preset -> BiquadFilter params */
 const EQ_PRESETS: Record<EQPreset, { type: BiquadFilterType; frequency: number; gain: number; Q: number } | null> = {
@@ -24,7 +24,7 @@ function applyEQ(node: BiquadFilterNode, preset: EQPreset) {
   }
 }
 
-export function useVideoPlayer(track: Track) {
+export function useVideoPlayer(track: Clip) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const eqNodeRef = useRef<BiquadFilterNode | null>(null);

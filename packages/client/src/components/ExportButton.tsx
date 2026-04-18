@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Track } from 'shared/types';
+import type { Clip } from 'shared/types';
 import { useFFmpeg } from '../hooks/useFFmpeg';
 import { buildFFmpegArgs, getOutputName } from '../lib/ffmpeg-commands';
 
 interface ExportButtonProps {
-  track: Track;
+  track: Clip;
 }
 
 export default function ExportButton({ track }: ExportButtonProps) {

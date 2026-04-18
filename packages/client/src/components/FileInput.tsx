@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Track } from 'shared/types';
+import type { Clip } from 'shared/types';
 import { DEFAULT_EFFECTS } from 'shared/types';
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const ACCEPTED_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
 
 interface FileInputProps {
-  onFileReady: (track: Track) => void;
+  onFileReady: (track: Clip) => void;
 }
 
 export default function FileInput({ onFileReady }: FileInputProps) {
@@ -40,7 +40,7 @@ export default function FileInput({ onFileReady }: FileInputProps) {
         // Get duration
         const duration = await getMediaDuration(url, type);
 
-        const track: Track = {
+        const track: Clip = {
           id: crypto.randomUUID(),
           name: file.name,
           file,

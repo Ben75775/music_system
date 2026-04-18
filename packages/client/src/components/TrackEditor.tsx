@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Track, TrackEffect } from 'shared/types';
+import type { Clip, TrackEffect } from 'shared/types';
 import { useWaveSurfer } from '../hooks/useWaveSurfer';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { useSpacebar } from '../hooks/useSpacebar';
@@ -8,11 +8,11 @@ import Controls from './Controls';
 import ExportButton from './ExportButton';
 
 interface TrackEditorProps {
-  track: Track;
+  track: Clip;
   /** Discrete change -- pushes previous state to undo history */
-  onUpdateTrack: (track: Track) => void;
+  onUpdateTrack: (track: Clip) => void;
   /** Continuous drag change -- updates value without creating undo entry */
-  onDragUpdateTrack: (track: Track) => void;
+  onDragUpdateTrack: (track: Clip) => void;
   onBack: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -106,9 +106,9 @@ function AudioEditor({
   onUpdateTrack,
   onDragUpdateTrack,
 }: {
-  track: Track;
-  onUpdateTrack: (track: Track) => void;
-  onDragUpdateTrack: (track: Track) => void;
+  track: Clip;
+  onUpdateTrack: (track: Clip) => void;
+  onDragUpdateTrack: (track: Clip) => void;
 }) {
   const { t } = useTranslation();
   const waveformRef = useRef<HTMLDivElement>(null);
@@ -221,9 +221,9 @@ function VideoEditor({
   onUpdateTrack,
   onDragUpdateTrack,
 }: {
-  track: Track;
-  onUpdateTrack: (track: Track) => void;
-  onDragUpdateTrack: (track: Track) => void;
+  track: Clip;
+  onUpdateTrack: (track: Clip) => void;
+  onDragUpdateTrack: (track: Clip) => void;
 }) {
   const { bind, isPlaying, isReady, currentTime, togglePlayPause, seekTo } =
     useVideoPlayer(track);

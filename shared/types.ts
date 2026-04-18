@@ -52,6 +52,3 @@ export const DEFAULT_EFFECTS: TrackEffect = {
   speed: 1,
   eqPreset: 'none',
 };
-
-// Back-compat alias: old Track code will be renamed in Phase 4.
-export type Track = Clip;

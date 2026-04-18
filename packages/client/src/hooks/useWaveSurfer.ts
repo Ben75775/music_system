@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import type { Track, EQPreset } from 'shared/types';
+import type { Clip, EQPreset } from 'shared/types';
 
 interface UseWaveSurferOptions {
-  track: Track;
+  track: Clip;
   container: HTMLElement | null;
 }
 

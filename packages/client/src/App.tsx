@@ -4,15 +4,15 @@ import Layout from './components/Layout';
 import FileInput from './components/FileInput';
 import TrackEditor from './components/TrackEditor';
 import { useHistory } from './hooks/useHistory';
-import type { Track } from 'shared/types';
+import type { Clip } from 'shared/types';
 
 export default function App() {
   const { t } = useTranslation();
   const [hasTrack, setHasTrack] = useState(false);
-  const history = useHistory<Track | null>(null);
+  const history = useHistory<Clip | null>(null);
 
   const handleFileReady = useCallback(
-    (track: Track) => {
+    (track: Clip) => {
       history.reset(track);
       setHasTrack(true);
     },
