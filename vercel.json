@@ -2,7 +2,7 @@
   "buildCommand": "npm run build --workspace=packages/client",
   "outputDirectory": "packages/client/dist",
   "functions": {
-    "packages/api/src/*.ts": {
+    "api/*.ts": {
       "maxDuration": 30
     }
   },
@@ -14,8 +14,5 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
       ]
     }
-  ],
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/packages/api/src/:path*" }
   ]
 }
