@@ -1,0 +1,14 @@
+{
+  "name": "music-system",
+  "private": true,
+  "workspaces": [
+    "packages/client",
+    "packages/api",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/client",
+    "build": "npm run build --workspace=packages/client",
+    "preview": "npm run preview --workspace=packages/client"
+  }
+}
