@@ -67,8 +67,7 @@ export function useWaveSurfer({ track, container }: UseWaveSurferOptions) {
         // Apply initial values
         const t = trackRef.current;
         gainNode.gain.value = t.effects.volume;
-        mediaEl.playbackRate = t.effects.speed * t.effects.pitch;
-        mediaEl.preservesPitch = t.effects.pitch === 1;
+        mediaEl.playbackRate = t.effects.speed;
         applyEQ(eqNode, t.effects.eqPreset);
       } catch {
         gainNodeRef.current = null;
@@ -131,18 +130,17 @@ export function useWaveSurfer({ track, container }: UseWaveSurferOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track.url, container]);
 
-  // Live speed + pitch
+  // Live speed
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws) return;
     try {
       const mediaEl = ws.getMediaElement();
-      mediaEl.preservesPitch = track.effects.pitch === 1;
-      mediaEl.playbackRate = track.effects.speed * track.effects.pitch;
+      mediaEl.playbackRate = track.effects.speed;
     } catch {
       ws.setPlaybackRate(track.effects.speed);
     }
-  }, [track.effects.speed, track.effects.pitch]);
+  }, [track.effects.speed]);
 
   // Live volume
   useEffect(() => {

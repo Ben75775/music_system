@@ -43,12 +43,6 @@ export function buildFFmpegArgs(track: Track): string[] {
     filters.push(`atempo=${effects.speed.toFixed(2)}`);
   }
 
-  // Pitch shift
-  if (effects.pitch !== 1) {
-    const rate = Math.round(44100 * effects.pitch);
-    filters.push(`asetrate=${rate},aresample=44100`);
-  }
-
   // EQ presets
   switch (effects.eqPreset) {
     case 'bass-boost':

@@ -120,13 +120,12 @@ export function useVideoPlayer(track: Track) {
     return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
 
-  // Live speed + pitch
+  // Live speed
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.preservesPitch = track.effects.pitch === 1;
-      videoRef.current.playbackRate = track.effects.speed * track.effects.pitch;
+      videoRef.current.playbackRate = track.effects.speed;
     }
-  }, [track.effects.speed, track.effects.pitch]);
+  }, [track.effects.speed]);
 
   // Live volume
   useEffect(() => {

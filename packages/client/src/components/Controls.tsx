@@ -48,18 +48,6 @@ export default function Controls({ effects, onChange, onDragChange }: ControlsPr
         onDrag={(v) => dragUpdate({ speed: v })}
       />
       <SliderControl
-        label={t('editor.pitch')}
-        value={effects.pitch}
-        min={0.5}
-        max={2}
-        step={0.05}
-        displaySuffix="x"
-        displayMultiplier={1}
-        decimals={2}
-        onCommit={(v) => update({ pitch: v })}
-        onDrag={(v) => dragUpdate({ pitch: v })}
-      />
-      <SliderControl
         label={t('editor.fadeIn')}
         value={effects.fadeIn}
         min={0}
