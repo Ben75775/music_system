@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H, baseCoverScale, clampOffset } from '../lib/image-fit';
@@ -19,7 +19,7 @@ interface ImageEditorProps {
 export default function ImageEditor({
   edit,
   onUpdate,
-  onDragUpdate: _onDragUpdate,
+  onDragUpdate,
   onBack,
   onUndo,
   onRedo,
@@ -67,6 +67,76 @@ export default function ImageEditor({
     onUpdate({ ...edit, scale: 1, offsetX: 0, offsetY: 0 });
   };
 
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 8;
+
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Mouse pan — track drag start state, emit onDragUpdate during, onUpdate on release.
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startOffsetX = edit.offsetX;
+    const startOffsetY = edit.offsetY;
+
+    // The outer frame's rendered width (after max-width: 80vw scaling) is used
+    // to convert screen-pixel drags into source-pixel drags.
+    const frameEl = e.currentTarget as HTMLElement;
+    const rect = frameEl.getBoundingClientRect();
+    const screenToSource = FRAME_W / rect.width;
+
+    const onMove = (ev: MouseEvent) => {
+      const dx = (ev.clientX - startX) * screenToSource;
+      const dy = (ev.clientY - startY) * screenToSource;
+      const clamped = clampOffset({
+        naturalW: edit.naturalWidth,
+        naturalH: edit.naturalHeight,
+        rotation: edit.rotation,
+        scale: edit.scale,
+        offsetX: startOffsetX + dx,
+        offsetY: startOffsetY + dy,
+      });
+      onDragUpdate({ ...edit, ...clamped });
+    };
+    const onUp = (ev: MouseEvent) => {
+      const dx = (ev.clientX - startX) * screenToSource;
+      const dy = (ev.clientY - startY) * screenToSource;
+      const clamped = clampOffset({
+        naturalW: edit.naturalWidth,
+        naturalH: edit.naturalHeight,
+        rotation: edit.rotation,
+        scale: edit.scale,
+        offsetX: startOffsetX + dx,
+        offsetY: startOffsetY + dy,
+      });
+      onUpdate({ ...edit, ...clamped });
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  // Wheel zoom — continuous updates via onDragUpdate, commit on short idle.
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = Math.pow(1.0015, -e.deltaY);
+    const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, edit.scale * factor));
+    const clamped = clampOffset({
+      naturalW: edit.naturalWidth,
+      naturalH: edit.naturalHeight,
+      rotation: edit.rotation,
+      scale: nextScale,
+      offsetX: edit.offsetX,
+      offsetY: edit.offsetY,
+    });
+    const next = { ...edit, scale: nextScale, ...clamped };
+    onDragUpdate(next);
+    if (wheelTimer.current) clearTimeout(wheelTimer.current);
+    wheelTimer.current = setTimeout(() => onUpdate(next), 150);
+  };
+
   return (
     <div className="space-y-4 w-full max-w-4xl mx-auto p-4">
       {/* Header */}
@@ -104,7 +174,7 @@ export default function ImageEditor({
       {/* Crop frame — 1034×1379 scaled down to fit viewport */}
       <div className="flex justify-center">
         <div
-          className="relative overflow-hidden bg-gray-900 shadow-lg"
+          className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing"
           style={{
             width: FRAME_W,
             height: FRAME_H,
@@ -112,6 +182,8 @@ export default function ImageEditor({
             maxHeight: '70vh',
             aspectRatio: `${FRAME_W} / ${FRAME_H}`,
           }}
+          onMouseDown={onMouseDown}
+          onWheel={onWheel}
         >
           <img
             src={edit.src}
