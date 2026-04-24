@@ -1,16 +1,16 @@
 {
   "app": {
-    "title": "עורך מוזיקה",
-    "subtitle": "עריכת אודיו ווידאו לאירועים שלכם"
+    "title": "עורך הטקסים של בן",
+    "subtitle": "עריכת אודיו, וידאו ותמונות לטקס שלכם"
   },
   "input": {
     "uploadTitle": "העלאת קובץ",
-    "uploadDesc": "גררו קובץ MP3 או MP4 לכאן, או לחצו לבחירה",
+    "uploadDesc": "גררו קובץ MP3, MP4 או תמונה לכאן, או לחצו לבחירה",
     "orYoutube": "או הדביקו לינק מיוטיוב",
     "youtubePlaceholder": "https://www.youtube.com/watch?v=...",
     "edit": "ערוך",
     "loading": "טוען...",
-    "invalidFile": "יש להעלות קובץ MP3 או MP4",
+    "invalidFile": "יש להעלות קובץ MP3, MP4 או תמונה",
     "fileTooLarge": "הקובץ גדול מדי (מקסימום 200MB)"
   },
   "editor": {

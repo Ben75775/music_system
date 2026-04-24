@@ -1,16 +1,16 @@
 {
   "app": {
-    "title": "Music Editor",
-    "subtitle": "Edit audio and video for your events"
+    "title": "Ben's Ceremony Editor",
+    "subtitle": "Edit audio, video, and images for your ceremony"
   },
   "input": {
     "uploadTitle": "Upload a file",
-    "uploadDesc": "Drag & drop an MP3 or MP4 file here, or click to browse",
+    "uploadDesc": "Drag & drop an MP3, MP4, or image file here, or click to browse",
     "orYoutube": "Or paste a YouTube link",
     "youtubePlaceholder": "https://www.youtube.com/watch?v=...",
     "edit": "Edit",
     "loading": "Loading...",
-    "invalidFile": "Please upload an MP3 or MP4 file",
+    "invalidFile": "Please upload an MP3, MP4, or image file",
     "fileTooLarge": "File is too large (max 200MB)"
   },
   "editor": {
