@@ -78,12 +78,14 @@ export default function ImageEditor({
   };
 
   const fit = () => {
+    // Cover: image fills the 1034×1379 frame completely, overflow cropped.
+    // Use max() so the smaller image dimension matches the larger frame dim.
     const rad = (edit.rotation * Math.PI) / 180;
     const cosR = Math.abs(Math.cos(rad));
     const sinR = Math.abs(Math.sin(rad));
     const bboxW = edit.naturalWidth * cosR + edit.naturalHeight * sinR;
     const bboxH = edit.naturalWidth * sinR + edit.naturalHeight * cosR;
-    const nextScale = Math.min(FRAME_W / bboxW, FRAME_H / bboxH);
+    const nextScale = Math.max(FRAME_W / bboxW, FRAME_H / bboxH);
     onUpdate({ ...edit, scale: nextScale, offsetX: 0, offsetY: 0 });
   };
 
@@ -220,13 +222,14 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport */}
+      {/* Editor viewport — sized to accommodate the image at natural pixels,
+          up to 95vw × 85vh on small screens. Never smaller than the crop frame. */}
       <div className="flex justify-center">
         <div
           className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: 'min(90vw, 1400px)',
-            height: 'min(80vh, 1700px)',
+            width: `min(max(${FRAME_W}px, ${edit.naturalWidth}px), 95vw)`,
+            height: `min(max(${FRAME_H}px, ${edit.naturalHeight}px), 85vh)`,
           }}
           onMouseDown={onMouseDown}
           onWheel={onWheel}
