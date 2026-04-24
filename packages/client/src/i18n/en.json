@@ -32,7 +32,8 @@
     "export": "Download",
     "exporting": "Processing...",
     "loadingFFmpeg": "Loading editor engine...",
-    "ready": "Ready"
+    "ready": "Ready",
+    "advancedEditor": "Need more tools?"
   },
   "project": {
     "empty": "Project has no clips",
@@ -57,6 +58,13 @@
     "right": "Right half",
     "top": "Top half",
     "bottom": "Bottom half"
+  },
+  "export": {
+    "download": "Download merged file",
+    "clipFailed": "A clip failed to process — try replacing it",
+    "concatFailed": "Merging clips failed. Please retry.",
+    "tooLarge": "Project too large — try shorter clips or fewer of them",
+    "failed": "Export failed"
   },
   "language": {
     "toggle": "עברית"

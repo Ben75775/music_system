@@ -7,7 +7,6 @@ import { useWaveSurfer } from '../hooks/useWaveSurfer';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { useSpacebar } from '../hooks/useSpacebar';
 import Controls from './Controls';
-import ExportButton from './ExportButton';
 
 interface TrackEditorProps {
   clip: Clip;
@@ -222,11 +221,6 @@ function AudioEditor({
           style={{ display: 'none' }}
         />
       )}
-
-      {/* Export */}
-      <div className="flex justify-center pt-4">
-        <ExportButton track={clip} />
-      </div>
     </>
   );
 }
@@ -333,11 +327,6 @@ function VideoEditor({
         project={project}
         onCropChange={(crop) => onUpdateClip({ ...clip, crop })}
       />
-
-      {/* Export */}
-      <div className="flex justify-center pt-4">
-        <ExportButton track={clip} />
-      </div>
     </>
   );
 }

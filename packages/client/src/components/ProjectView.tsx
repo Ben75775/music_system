@@ -10,6 +10,7 @@ import { guessAspect } from '../lib/aspect';
 import { defaultCropForAspect } from '../lib/crop';
 import MasterTimeline from './MasterTimeline';
 import { usePlaybackEngine } from '../lib/playback-engine';
+import ExportButton from './ExportButton';
 
 interface ProjectViewProps {
   project: Project;
@@ -206,6 +207,18 @@ export default function ProjectView({
             canRedo={canRedo}
           />
         </section>
+      </div>
+
+      <div className="flex flex-wrap justify-center items-center gap-3 pt-4">
+        <ExportButton project={project} />
+        <a
+          href="https://online-video-cutter.com/video-editor"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-5 py-3 rounded-xl border border-primary-600 text-primary-700 font-semibold hover:bg-primary-50"
+        >
+          {t('editor.advancedEditor')}
+        </a>
       </div>
 
       {engine.nextClipId && (() => {
