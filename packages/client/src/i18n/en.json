@@ -36,7 +36,12 @@
     "advancedEditor": "Need more tools? →"
   },
   "image": {
-    "unsupportedFormat": "Only PNG, JPEG, and WebP images are supported"
+    "unsupportedFormat": "Only PNG, JPEG, and WebP images are supported",
+    "title": "Image editor",
+    "center": "Center",
+    "rotate": "Rotate 90°",
+    "download": "Download PNG",
+    "instructions": "Drag to reposition. Scroll to zoom."
   },
   "project": {
     "empty": "Project has no clips",

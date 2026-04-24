@@ -36,7 +36,12 @@
     "advancedEditor": "צריכים עוד כלים? →"
   },
   "image": {
-    "unsupportedFormat": "רק תמונות PNG, JPEG ו-WebP נתמכות"
+    "unsupportedFormat": "רק תמונות PNG, JPEG ו-WebP נתמכות",
+    "title": "עורך תמונות",
+    "center": "למרכז",
+    "rotate": "סיבוב 90°",
+    "download": "הורדת PNG",
+    "instructions": "גררו למיקום. גלילה לזום."
   },
   "project": {
     "empty": "אין קליפים בפרויקט",

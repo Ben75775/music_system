@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import FileInput from './components/FileInput';
+import ImageEditor from './components/ImageEditor';
 import ProjectView from './components/ProjectView';
 import { useHistory } from './hooks/useHistory';
 import type { Clip, ImageEdit, Project } from 'shared/types';
@@ -52,18 +53,16 @@ export default function App() {
           />
         </div>
       ) : imageEdit ? (
-        <div className="p-8 text-center">
-          <p className="text-lg text-gray-700">Image editor (placeholder)</p>
-          <p className="text-sm text-gray-500 mt-2">
-            {imageEdit.name} — {imageEdit.naturalWidth}×{imageEdit.naturalHeight}
-          </p>
-          <button
-            onClick={handleBackImage}
-            className="mt-4 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
-          >
-            {t('editor.back')}
-          </button>
-        </div>
+        <ImageEditor
+          edit={imageEdit}
+          onUpdate={imageHistory.set}
+          onDragUpdate={imageHistory.replace}
+          onBack={handleBackImage}
+          onUndo={imageHistory.undo}
+          onRedo={imageHistory.redo}
+          canUndo={imageHistory.canUndo}
+          canRedo={imageHistory.canRedo}
+        />
       ) : (
         <ProjectView
           project={project!}
