@@ -274,10 +274,7 @@ export default function ImageEditor({
               transformOrigin: 'center',
             }}
           />
-          {/* Crop-area indicator — dashed outline on the rectangle edge so
-              the user can see where the crop boundary is, plus the dim
-              outside overlay. Double outline (white over black) keeps it
-              visible against any image content. */}
+          {/* Dim overlay outside the crop region */}
           <div
             style={{
               position: 'absolute',
@@ -285,9 +282,23 @@ export default function ImageEditor({
               height: FRAME_H,
               left: `calc(50% - ${FRAME_W / 2}px)`,
               top: `calc(50% - ${FRAME_H / 2}px)`,
-              outline: '2px dashed rgba(255, 255, 255, 0.95)',
-              outlineOffset: '-1px',
-              boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.9), 0 0 0 9999px rgba(0, 0, 0, 0.55)',
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
+              pointerEvents: 'none',
+            }}
+          />
+          {/* Border with mix-blend-mode: difference — the dashed white line
+              blends against whatever's underneath to produce its visual
+              negative, so the crop edge is legible over ANY image content. */}
+          <div
+            style={{
+              position: 'absolute',
+              width: FRAME_W,
+              height: FRAME_H,
+              left: `calc(50% - ${FRAME_W / 2}px)`,
+              top: `calc(50% - ${FRAME_H / 2}px)`,
+              border: '2px dashed white',
+              boxSizing: 'border-box',
+              mixBlendMode: 'difference',
               pointerEvents: 'none',
             }}
           />
