@@ -238,9 +238,9 @@ export default function ImageEditor({
   };
 
   return (
-    <div className="space-y-4 w-full max-w-4xl mx-auto p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 w-full">
+      {/* Header — constrained to max-w-4xl for readability */}
+      <div className="max-w-4xl mx-auto px-4 pt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             onClick={onBack}
@@ -271,14 +271,14 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — sized to show the whole image (up to the browser
-          limit). displayScale is computed dynamically so the whole stage
-          (image + crop frame) fits. Proportions stay 1:1 with the 1034×1379
-          export; only visual size shrinks. */}
-      <div className="flex justify-center">
+      {/* Editor viewport — NOT constrained by max-w-4xl so it can be as wide
+          as the image requires. flex-shrink:0 prevents the flex parent from
+          squeezing it. displayScale already guarantees stage*displayScale
+          fits within 85vw × 75vh, so overflow beyond the browser is rare. */}
+      <div className="flex justify-center w-full">
         <div
           ref={viewportRef}
-          className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none"
+          className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none shrink-0"
           style={{
             width: stageW * displayScale,
             height: stageH * displayScale,
@@ -314,58 +314,58 @@ export default function ImageEditor({
         </div>
       </div>
 
-      {/* Instructions */}
-      <p className="text-center text-sm text-gray-500">{t('image.instructions')}</p>
+      {/* Instructions + controls — back inside the max-w-4xl constraint */}
+      <div className="max-w-4xl mx-auto px-4 pb-4 space-y-4">
+        <p className="text-center text-sm text-gray-500">{t('image.instructions')}</p>
 
-      {/* Action buttons row */}
-      <div className="flex justify-center gap-2">
-        <button
-          onClick={reset}
-          className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
-        >
-          {t('image.reset')}
-        </button>
-        <button
-          onClick={fit}
-          className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
-        >
-          {t('image.fit')}
-        </button>
-        <button
-          onClick={handleDownload}
-          disabled={exporting}
-          className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
-        >
-          {exporting ? t('editor.exporting') : t('image.download')}
-        </button>
-      </div>
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={reset}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+          >
+            {t('image.reset')}
+          </button>
+          <button
+            onClick={fit}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+          >
+            {t('image.fit')}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={exporting}
+            className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
+          >
+            {exporting ? t('editor.exporting') : t('image.download')}
+          </button>
+        </div>
 
-      {/* Rotation row — wide slider for per-degree precision + number input for exact entry */}
-      <div className="flex items-center gap-3 px-2">
-        <span className="text-sm text-gray-700 shrink-0">{t('image.rotate')}</span>
-        <input
-          type="range"
-          min={0}
-          max={360}
-          step={1}
-          value={edit.rotation}
-          onChange={onRotationChange}
-          className="flex-1"
-          aria-label={t('image.rotate')}
-          dir="ltr"
-        />
-        <input
-          type="number"
-          min={0}
-          max={360}
-          step={1}
-          value={Math.round(edit.rotation)}
-          onChange={onRotationChange}
-          className="w-16 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
-          aria-label={t('image.rotate')}
-          dir="ltr"
-        />
-        <span className="font-mono text-xs text-gray-500 shrink-0">°</span>
+        <div className="flex items-center gap-3 px-2">
+          <span className="text-sm text-gray-700 shrink-0">{t('image.rotate')}</span>
+          <input
+            type="range"
+            min={0}
+            max={360}
+            step={1}
+            value={edit.rotation}
+            onChange={onRotationChange}
+            className="flex-1"
+            aria-label={t('image.rotate')}
+            dir="ltr"
+          />
+          <input
+            type="number"
+            min={0}
+            max={360}
+            step={1}
+            value={Math.round(edit.rotation)}
+            onChange={onRotationChange}
+            className="w-16 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            aria-label={t('image.rotate')}
+            dir="ltr"
+          />
+          <span className="font-mono text-xs text-gray-500 shrink-0">°</span>
+        </div>
       </div>
     </div>
   );
