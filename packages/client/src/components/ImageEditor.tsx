@@ -110,17 +110,15 @@ export default function ImageEditor({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Dynamic display scale: the stage intrinsic size must accommodate BOTH the
-  // whole image (naturalWidth × naturalHeight) AND the crop frame with some
-  // padding. We then shrink the stage uniformly so it fits comfortably in the
-  // browser window. The export math is unaffected — canvas is always 1034×1379.
-  const stageW = Math.max(FRAME_W * 1.2, edit.naturalWidth);
-  const stageH = Math.max(FRAME_H * 1.1, edit.naturalHeight);
-  const displayScale = Math.min(
-    1,
-    (winSize.w * 0.85) / stageW,
-    (winSize.h * 0.75) / stageH
-  );
+  // Dynamic display scale: the stage intrinsic size is max(frame, image) —
+  // whatever is bigger in each axis. displayScale is bounded ONLY by browser
+  // width (not height) so images that fit horizontally render at natural
+  // pixel size (e.g. 1280×720 on a 1920-wide browser → displayScale = 1).
+  // If the stage is taller than the browser window, the page scrolls — that's
+  // an acceptable trade-off for avoiding forced shrink on small images.
+  const stageW = Math.max(FRAME_W, edit.naturalWidth);
+  const stageH = Math.max(FRAME_H, edit.naturalHeight);
+  const displayScale = Math.min(1, (winSize.w * 0.9) / stageW);
   const displayScaleRef = useRef(displayScale);
   useEffect(() => {
     displayScaleRef.current = displayScale;
