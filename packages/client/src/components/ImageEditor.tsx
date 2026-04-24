@@ -247,11 +247,10 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — 1:1 with source coords. Image always at natural
-          pixel size, no displayScale. If the stage is wider/taller than the
-          browser, the page scrolls. shrink-0 prevents any flex parent from
-          squeezing the viewport. */}
-      <div className="flex justify-center w-full overflow-auto">
+      {/* Editor viewport — 1:1 with source coords. No local scrollbar:
+          if the viewport is wider than the browser, page-level horizontal
+          scroll appears (cleaner than a strip under the photo). */}
+      <div className="flex justify-center w-full">
         <div
           ref={viewportRef}
           className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none shrink-0"
@@ -275,7 +274,10 @@ export default function ImageEditor({
               transformOrigin: 'center',
             }}
           />
-          {/* Crop-area indicator — dims what's outside the 1034×1379 region. */}
+          {/* Crop-area indicator — dashed outline on the rectangle edge so
+              the user can see where the crop boundary is, plus the dim
+              outside overlay. Double outline (white over black) keeps it
+              visible against any image content. */}
           <div
             style={{
               position: 'absolute',
@@ -283,7 +285,9 @@ export default function ImageEditor({
               height: FRAME_H,
               left: `calc(50% - ${FRAME_W / 2}px)`,
               top: `calc(50% - ${FRAME_H / 2}px)`,
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+              outline: '2px dashed rgba(255, 255, 255, 0.95)',
+              outlineOffset: '-1px',
+              boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.9), 0 0 0 9999px rgba(0, 0, 0, 0.55)',
               pointerEvents: 'none',
             }}
           />
