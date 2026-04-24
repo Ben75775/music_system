@@ -151,6 +151,52 @@ export default function ImageEditor({
     return () => el.removeEventListener('wheel', handler);
   }, [onDragUpdate, onUpdate]);
 
+  // Slider refs so we can attach non-passive wheel listeners (step by 1 per tick).
+  const rotationSliderRef = useRef<HTMLInputElement>(null);
+  const offsetXSliderRef = useRef<HTMLInputElement>(null);
+  const offsetYSliderRef = useRef<HTMLInputElement>(null);
+
+  // Wheel over a slider = ±1 unit per tick. Scroll up = +1, scroll down = -1.
+  // Non-passive so we can prevent the page from scrolling under the cursor.
+  useEffect(() => {
+    const attachWheel = (
+      el: HTMLInputElement | null,
+      apply: (current: ImageEdit, delta: number) => ImageEdit,
+      commitTimer: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+    ) => {
+      if (!el) return () => {};
+      const handler = (ev: WheelEvent) => {
+        ev.preventDefault();
+        const delta = ev.deltaY > 0 ? -1 : 1;
+        const next = apply(editRef.current, delta);
+        onDragUpdate(next);
+        if (commitTimer.current) clearTimeout(commitTimer.current);
+        commitTimer.current = setTimeout(() => onUpdate(next), 150);
+      };
+      el.addEventListener('wheel', handler, { passive: false });
+      return () => el.removeEventListener('wheel', handler);
+    };
+
+    const cleanups = [
+      attachWheel(
+        rotationSliderRef.current,
+        (cur, d) => ({ ...cur, rotation: ((cur.rotation + d) % 360 + 360) % 360 }),
+        rotationCommitTimer
+      ),
+      attachWheel(
+        offsetXSliderRef.current,
+        (cur, d) => ({ ...cur, offsetX: cur.offsetX + d }),
+        offsetXCommitTimer
+      ),
+      attachWheel(
+        offsetYSliderRef.current,
+        (cur, d) => ({ ...cur, offsetY: cur.offsetY + d }),
+        offsetYCommitTimer
+      ),
+    ];
+    return () => cleanups.forEach((fn) => fn());
+  }, [onDragUpdate, onUpdate]);
+
   // Mouse pan — track drag start state, emit onDragUpdate during, onUpdate on release.
   const onMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -358,6 +404,7 @@ export default function ImageEditor({
         <div className="flex items-center gap-3 px-2">
           <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.rotate')}</span>
           <input
+            ref={rotationSliderRef}
             type="range"
             min={0}
             max={360}
@@ -385,6 +432,7 @@ export default function ImageEditor({
         <div className="flex items-center gap-3 px-2">
           <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.horizontal')}</span>
           <input
+            ref={offsetXSliderRef}
             type="range"
             min={-panRangeX}
             max={panRangeX}
@@ -410,6 +458,7 @@ export default function ImageEditor({
         <div className="flex items-center gap-3 px-2">
           <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.vertical')}</span>
           <input
+            ref={offsetYSliderRef}
             type="range"
             min={-panRangeY}
             max={panRangeY}
