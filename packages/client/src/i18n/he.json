@@ -36,7 +36,11 @@
   },
   "project": {
     "empty": "אין קליפים בפרויקט",
-    "clipListPlaceholder": "רשימת קליפים (בקרוב)"
+    "clipListPlaceholder": "רשימת קליפים (בקרוב)",
+    "addClipFile": "הוספת קובץ",
+    "removeClip": "הסרת קליפ",
+    "audioOnly": "פרויקט אודיו מקבל רק קובצי MP3",
+    "videoOnly": "פרויקט וידאו מקבל רק קובצי MP4"
   },
   "language": {
     "toggle": "English"

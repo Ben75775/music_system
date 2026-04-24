@@ -36,7 +36,11 @@
   },
   "project": {
     "empty": "Project has no clips",
-    "clipListPlaceholder": "Clip list (coming soon)"
+    "clipListPlaceholder": "Clip list (coming soon)",
+    "addClipFile": "Add file to project",
+    "removeClip": "Remove clip",
+    "audioOnly": "Audio projects only accept MP3 files",
+    "videoOnly": "Video projects only accept MP4 files"
   },
   "language": {
     "toggle": "עברית"

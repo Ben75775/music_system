@@ -37,8 +37,8 @@ export default function FileInput({ onFileReady }: FileInputProps) {
           ? 'video'
           : 'audio';
 
-        // Get duration
-        const duration = await getMediaDuration(url, type);
+        // Get duration and dimensions (for video)
+        const { duration, width, height } = await readMediaMetadata(url, type);
 
         const track: Clip = {
           id: crypto.randomUUID(),
@@ -49,6 +49,7 @@ export default function FileInput({ onFileReady }: FileInputProps) {
           duration,
           trim: { start: 0, end: duration },
           effects: { ...DEFAULT_EFFECTS },
+          ...(type === 'video' ? { sourceWidth: width, sourceHeight: height } : {}),
         };
 
         onFileReady(track);
@@ -125,17 +126,29 @@ export default function FileInput({ onFileReady }: FileInputProps) {
   );
 }
 
-function getMediaDuration(
+function readMediaMetadata(
   url: string,
   type: 'audio' | 'video'
-): Promise<number> {
+): Promise<{ duration: number; width: number; height: number }> {
   return new Promise((resolve, reject) => {
-    const el = document.createElement(type === 'audio' ? 'audio' : 'video');
-    el.preload = 'metadata';
-    el.onloadedmetadata = () => {
-      resolve(el.duration);
-    };
-    el.onerror = reject;
-    el.src = url;
+    if (type === 'audio') {
+      const el = document.createElement('audio');
+      el.preload = 'metadata';
+      el.onloadedmetadata = () =>
+        resolve({ duration: el.duration, width: 0, height: 0 });
+      el.onerror = reject;
+      el.src = url;
+    } else {
+      const el = document.createElement('video');
+      el.preload = 'metadata';
+      el.onloadedmetadata = () =>
+        resolve({
+          duration: el.duration,
+          width: el.videoWidth,
+          height: el.videoHeight,
+        });
+      el.onerror = reject;
+      el.src = url;
+    }
   });
 }
