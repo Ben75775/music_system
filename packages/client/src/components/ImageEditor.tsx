@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
-import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale, containScale } from '../lib/image-fit';
+import { FRAME_W, FRAME_H } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 
 interface ImageEditorProps {
   edit: ImageEdit;
   /** Discrete change — pushes previous state to undo history. */
   onUpdate: (edit: ImageEdit) => void;
-  /** Continuous mid-gesture change — no undo entry. Unused in this task; wired in 3.2. */
+  /** Continuous mid-gesture change — no undo entry. */
   onDragUpdate: (edit: ImageEdit) => void;
   onBack: () => void;
   onUndo: () => void;
@@ -16,6 +16,9 @@ interface ImageEditorProps {
   canUndo: boolean;
   canRedo: boolean;
 }
+
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 16;
 
 export default function ImageEditor({
   edit,
@@ -61,52 +64,28 @@ export default function ImageEditor({
     return () => document.removeEventListener('keydown', handler);
   }, [onUndo, onRedo]);
 
-  const cover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, edit.rotation);
-  const displayScale = cover * edit.scale;
-
   const rotationCommitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextRotation = Number(e.target.value);
-    // Preserve visual size across rotation: compensate scale so displayScale
-    // (= cover × scale) is constant as cover changes with rotation.
-    const oldCover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, edit.rotation);
-    const newCover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, nextRotation);
-    const nextScale = newCover > 0 ? edit.scale * (oldCover / newCover) : edit.scale;
-    const clamped = clampOffset({
-      naturalW: edit.naturalWidth,
-      naturalH: edit.naturalHeight,
-      rotation: nextRotation,
-      scale: nextScale,
-      offsetX: edit.offsetX,
-      offsetY: edit.offsetY,
-    });
-    const next = { ...edit, rotation: nextRotation, scale: nextScale, ...clamped };
+    const next = { ...edit, rotation: nextRotation };
     onDragUpdate(next);
     if (rotationCommitTimer.current) clearTimeout(rotationCommitTimer.current);
     rotationCommitTimer.current = setTimeout(() => onUpdate(next), 150);
   };
 
   const reset = () => {
-    onUpdate({
-      ...edit,
-      rotation: 0,
-      scale: initialScale(edit.naturalWidth, edit.naturalHeight, 0),
-      offsetX: 0,
-      offsetY: 0,
-    });
+    onUpdate({ ...edit, scale: 1, offsetX: 0, offsetY: 0, rotation: 0 });
   };
 
   const fit = () => {
-    onUpdate({
-      ...edit,
-      scale: containScale(edit.naturalWidth, edit.naturalHeight, edit.rotation),
-      offsetX: 0,
-      offsetY: 0,
-    });
+    const rad = (edit.rotation * Math.PI) / 180;
+    const cosR = Math.abs(Math.cos(rad));
+    const sinR = Math.abs(Math.sin(rad));
+    const bboxW = edit.naturalWidth * cosR + edit.naturalHeight * sinR;
+    const bboxH = edit.naturalWidth * sinR + edit.naturalHeight * cosR;
+    const nextScale = Math.min(FRAME_W / bboxW, FRAME_H / bboxH);
+    onUpdate({ ...edit, scale: nextScale, offsetX: 0, offsetY: 0 });
   };
-
-  const MIN_SCALE = 0.05;
-  const MAX_SCALE = 8;
 
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -118,37 +97,15 @@ export default function ImageEditor({
     const startOffsetX = edit.offsetX;
     const startOffsetY = edit.offsetY;
 
-    // The outer frame's rendered width (after max-width: 80vw scaling) is used
-    // to convert screen-pixel drags into source-pixel drags.
-    const frameEl = e.currentTarget as HTMLElement;
-    const rect = frameEl.getBoundingClientRect();
-    const screenToSource = FRAME_W / rect.width;
-
     const onMove = (ev: MouseEvent) => {
-      const dx = (ev.clientX - startX) * screenToSource;
-      const dy = (ev.clientY - startY) * screenToSource;
-      const clamped = clampOffset({
-        naturalW: edit.naturalWidth,
-        naturalH: edit.naturalHeight,
-        rotation: edit.rotation,
-        scale: edit.scale,
-        offsetX: startOffsetX + dx,
-        offsetY: startOffsetY + dy,
-      });
-      onDragUpdate({ ...edit, ...clamped });
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
     };
     const onUp = (ev: MouseEvent) => {
-      const dx = (ev.clientX - startX) * screenToSource;
-      const dy = (ev.clientY - startY) * screenToSource;
-      const clamped = clampOffset({
-        naturalW: edit.naturalWidth,
-        naturalH: edit.naturalHeight,
-        rotation: edit.rotation,
-        scale: edit.scale,
-        offsetX: startOffsetX + dx,
-        offsetY: startOffsetY + dy,
-      });
-      onUpdate({ ...edit, ...clamped });
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
@@ -161,15 +118,7 @@ export default function ImageEditor({
     e.preventDefault();
     const factor = Math.pow(1.0015, -e.deltaY);
     const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, edit.scale * factor));
-    const clamped = clampOffset({
-      naturalW: edit.naturalWidth,
-      naturalH: edit.naturalHeight,
-      rotation: edit.rotation,
-      scale: nextScale,
-      offsetX: edit.offsetX,
-      offsetY: edit.offsetY,
-    });
-    const next = { ...edit, scale: nextScale, ...clamped };
+    const next = { ...edit, scale: nextScale };
     onDragUpdate(next);
     if (wheelTimer.current) clearTimeout(wheelTimer.current);
     wheelTimer.current = setTimeout(() => onUpdate(next), 150);
@@ -178,10 +127,6 @@ export default function ImageEditor({
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 0) return;
     e.preventDefault();
-
-    const frameEl = e.currentTarget as HTMLElement;
-    const rect = frameEl.getBoundingClientRect();
-    const screenToSource = FRAME_W / rect.width;
 
     if (e.touches.length === 1) {
       // Single-touch pan
@@ -193,31 +138,15 @@ export default function ImageEditor({
       const onMove = (ev: TouchEvent) => {
         if (ev.touches.length !== 1) return;
         ev.preventDefault();
-        const dx = (ev.touches[0].clientX - startX) * screenToSource;
-        const dy = (ev.touches[0].clientY - startY) * screenToSource;
-        const clamped = clampOffset({
-          naturalW: edit.naturalWidth,
-          naturalH: edit.naturalHeight,
-          rotation: edit.rotation,
-          scale: edit.scale,
-          offsetX: startOffsetX + dx,
-          offsetY: startOffsetY + dy,
-        });
-        onDragUpdate({ ...edit, ...clamped });
+        const dx = ev.touches[0].clientX - startX;
+        const dy = ev.touches[0].clientY - startY;
+        onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       };
       const onEnd = (ev: TouchEvent) => {
         const last = ev.changedTouches[0];
-        const dx = (last.clientX - startX) * screenToSource;
-        const dy = (last.clientY - startY) * screenToSource;
-        const clamped = clampOffset({
-          naturalW: edit.naturalWidth,
-          naturalH: edit.naturalHeight,
-          rotation: edit.rotation,
-          scale: edit.scale,
-          offsetX: startOffsetX + dx,
-          offsetY: startOffsetY + dy,
-        });
-        onUpdate({ ...edit, ...clamped });
+        const dx = last.clientX - startX;
+        const dy = last.clientY - startY;
+        onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
         window.removeEventListener('touchcancel', onEnd);
@@ -242,15 +171,7 @@ export default function ImageEditor({
           MIN_SCALE,
           Math.min(MAX_SCALE, startScale * (dist / startDist))
         );
-        const clamped = clampOffset({
-          naturalW: edit.naturalWidth,
-          naturalH: edit.naturalHeight,
-          rotation: edit.rotation,
-          scale: nextScale,
-          offsetX: edit.offsetX,
-          offsetY: edit.offsetY,
-        });
-        lastNext = { ...edit, scale: nextScale, ...clamped };
+        lastNext = { ...edit, scale: nextScale };
         onDragUpdate(lastNext);
       };
       const onEnd = () => {
@@ -299,21 +220,19 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Crop frame — 1034×1379 scaled down to fit viewport */}
+      {/* Editor viewport */}
       <div className="flex justify-center">
         <div
           className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: FRAME_W,
-            height: FRAME_H,
-            maxWidth: '80vw',
-            maxHeight: '70vh',
-            aspectRatio: `${FRAME_W} / ${FRAME_H}`,
+            width: 'min(90vw, 1400px)',
+            height: 'min(80vh, 1700px)',
           }}
           onMouseDown={onMouseDown}
           onWheel={onWheel}
           onTouchStart={onTouchStart}
         >
+          {/* Image at natural pixel size, centered, with user transform applied */}
           <img
             src={edit.src}
             alt=""
@@ -322,8 +241,21 @@ export default function ImageEditor({
             style={{
               width: edit.naturalWidth,
               height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${displayScale})`,
+              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
               transformOrigin: 'center',
+            }}
+          />
+          {/* Crop frame indicator — centered, dims everything outside it */}
+          <div
+            style={{
+              position: 'absolute',
+              width: FRAME_W,
+              height: FRAME_H,
+              left: `calc(50% - ${FRAME_W / 2}px)`,
+              top: `calc(50% - ${FRAME_H / 2}px)`,
+              border: '2px solid white',
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+              pointerEvents: 'none',
             }}
           />
         </div>

@@ -1,11 +1,6 @@
 import type { ImageEdit } from 'shared/types';
-import { FRAME_W, FRAME_H, baseCoverScale } from './image-fit';
+import { FRAME_W, FRAME_H } from './image-fit';
 
-/**
- * Render the current image edit into a 1034×1379 PNG blob using the same
- * transform convention as the preview:
- *   translate(frame-center + offset) → rotate → scale → draw image centered at origin.
- */
 export async function exportImage(edit: ImageEdit): Promise<Blob> {
   const img = await loadImage(edit.src);
 
@@ -15,15 +10,13 @@ export async function exportImage(edit: ImageEdit): Promise<Blob> {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas 2d context unavailable');
 
-  const cover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, edit.rotation);
-  const drawScale = cover * edit.scale;
-
   ctx.imageSmoothingQuality = 'high';
 
-  // Compose: translate to frame center + user offset, rotate, scale, then draw centered.
+  // Reproduce the preview sequence: translate to frame center + offset,
+  // rotate, scale, draw image centered at origin.
   ctx.translate(FRAME_W / 2 + edit.offsetX, FRAME_H / 2 + edit.offsetY);
   ctx.rotate((edit.rotation * Math.PI) / 180);
-  ctx.scale(drawScale, drawScale);
+  ctx.scale(edit.scale, edit.scale);
   ctx.drawImage(
     img,
     -edit.naturalWidth / 2,
@@ -49,7 +42,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Trigger a client-side save-as for the blob. */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

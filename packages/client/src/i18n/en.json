@@ -42,7 +42,7 @@
     "fit": "Fit to frame",
     "rotate": "Rotate",
     "download": "Download PNG",
-    "instructions": "Drag to reposition. Scroll to zoom."
+    "instructions": "Drag the image to reposition. Scroll to zoom. Rotate with the slider. The brighter rectangle is the crop that will be exported."
   },
   "youtubeThumb": {
     "title": "Download YouTube thumbnail",
