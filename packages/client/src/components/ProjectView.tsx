@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, Project } from 'shared/types';
 import TrackEditor from './TrackEditor';
@@ -8,6 +8,8 @@ import AspectPicker from './AspectPicker';
 import { arrayMove } from '../lib/array-move';
 import { guessAspect } from '../lib/aspect';
 import { defaultCropForAspect } from '../lib/crop';
+import MasterTimeline from './MasterTimeline';
+import { usePlaybackEngine } from '../lib/playback-engine';
 
 interface ProjectViewProps {
   project: Project;
@@ -33,6 +35,22 @@ export default function ProjectView({
   const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string>(project.clips[0]?.id ?? '');
   const selected = project.clips.find((c) => c.id === selectedId) ?? project.clips[0];
+
+  const engine = usePlaybackEngine(project);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault();
+        engine.toggle();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [engine]);
+
+  const displayedClipId = engine.isPlaying ? engine.activeClipId : selectedId;
+  const displayed = project.clips.find((c) => c.id === displayedClipId) ?? project.clips[0];
 
   const updateClip = useCallback(
     (next: Clip) => {
@@ -127,8 +145,15 @@ export default function ProjectView({
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-4 p-4">
-      {/* Master timeline placeholder (Phase 11 replaces this) */}
-      <div className="h-12 bg-gray-100 rounded-lg" />
+      <div className="bg-white border border-gray-200 rounded-xl p-3">
+        <MasterTimeline
+          clips={project.clips}
+          projectTime={engine.projectTime}
+          isPlaying={engine.isPlaying}
+          onSeek={engine.seek}
+          onToggle={engine.toggle}
+        />
+      </div>
 
       {project.mode === 'video' && (
         <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
@@ -167,8 +192,11 @@ export default function ProjectView({
         {/* Per-clip editor */}
         <section>
           <TrackEditor
-            clip={selected}
+            clip={displayed}
             project={project}
+            engineBind={
+              displayed.id === engine.activeClipId ? engine.bindActiveElement : undefined
+            }
             onUpdateClip={updateClip}
             onDragUpdateClip={dragUpdateClip}
             onBack={onBack}
@@ -179,6 +207,16 @@ export default function ProjectView({
           />
         </section>
       </div>
+
+      {engine.nextClipId && (() => {
+        const nc = project.clips.find((c) => c.id === engine.nextClipId);
+        if (!nc) return null;
+        return project.mode === 'audio' ? (
+          <audio key={nc.id} src={nc.url} preload="auto" style={{ display: 'none' }} />
+        ) : (
+          <video key={nc.id} src={nc.url} preload="auto" style={{ display: 'none' }} muted />
+        );
+      })()}
     </div>
   );
 }

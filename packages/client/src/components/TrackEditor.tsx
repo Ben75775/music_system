@@ -21,6 +21,8 @@ interface TrackEditorProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  /** Optional ref callback for the project playback engine. */
+  engineBind?: (el: HTMLMediaElement | null) => void;
 }
 
 export default function TrackEditor({
@@ -33,6 +35,7 @@ export default function TrackEditor({
   onRedo,
   canUndo,
   canRedo,
+  engineBind,
 }: TrackEditorProps) {
   const { t } = useTranslation();
 
@@ -95,9 +98,9 @@ export default function TrackEditor({
       </div>
 
       {clip.type === 'audio' ? (
-        <AudioEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
+        <AudioEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} engineBind={engineBind} />
       ) : (
-        <VideoEditor clip={clip} project={project} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
+        <VideoEditor clip={clip} project={project} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} engineBind={engineBind} />
       )}
     </div>
   );
@@ -109,10 +112,12 @@ function AudioEditor({
   clip,
   onUpdateClip,
   onDragUpdateClip,
+  engineBind,
 }: {
   clip: Clip;
   onUpdateClip: (clip: Clip) => void;
   onDragUpdateClip: (clip: Clip) => void;
+  engineBind?: (el: HTMLMediaElement | null) => void;
 }) {
   const { t } = useTranslation();
   const waveformRef = useRef<HTMLDivElement>(null);
@@ -210,6 +215,14 @@ function AudioEditor({
         <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
       </div>
 
+      {engineBind && (
+        <audio
+          ref={engineBind}
+          src={clip.url}
+          style={{ display: 'none' }}
+        />
+      )}
+
       {/* Export */}
       <div className="flex justify-center pt-4">
         <ExportButton track={clip} />
@@ -225,11 +238,13 @@ function VideoEditor({
   project,
   onUpdateClip,
   onDragUpdateClip,
+  engineBind,
 }: {
   clip: Clip;
   project: Project;
   onUpdateClip: (clip: Clip) => void;
   onDragUpdateClip: (clip: Clip) => void;
+  engineBind?: (el: HTMLMediaElement | null) => void;
 }) {
   const { bind, isPlaying, isReady, currentTime, togglePlayPause, seekTo } =
     useVideoPlayer(clip);
@@ -273,7 +288,7 @@ function VideoEditor({
       {/* Video Player with visual fade overlay */}
       <div className="bg-black rounded-xl overflow-hidden shadow-sm relative">
         <video
-          ref={bind}
+          ref={(el) => { bind(el); engineBind?.(el); }}
           src={clip.url}
           className="w-full max-h-[400px] mx-auto"
           style={videoCropStyle(clip)}
