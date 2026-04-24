@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H, baseCoverScale, clampOffset } from '../lib/image-fit';
+import { exportImage, downloadBlob } from '../lib/image-export';
 
 interface ImageEditorProps {
   edit: ImageEdit;
@@ -27,6 +28,19 @@ export default function ImageEditor({
   canRedo,
 }: ImageEditorProps) {
   const { t } = useTranslation();
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleDownload = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const blob = await exportImage(edit);
+      downloadBlob(blob, `${edit.name}_1034x1379.png`);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Ctrl+Z / Ctrl+Y keyboard shortcuts
   useEffect(() => {
@@ -307,6 +321,13 @@ export default function ImageEditor({
           className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
         >
           {t('image.rotate')}
+        </button>
+        <button
+          onClick={handleDownload}
+          disabled={exporting}
+          className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
+        >
+          {exporting ? t('editor.exporting') : t('image.download')}
         </button>
       </div>
     </div>
