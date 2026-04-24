@@ -73,6 +73,30 @@ export default function ImageEditor({
     rotationCommitTimer.current = setTimeout(() => onUpdate(next), 150);
   };
 
+  const offsetXCommitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onOffsetXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextOffsetX = Number(e.target.value);
+    const next = { ...edit, offsetX: nextOffsetX };
+    onDragUpdate(next);
+    if (offsetXCommitTimer.current) clearTimeout(offsetXCommitTimer.current);
+    offsetXCommitTimer.current = setTimeout(() => onUpdate(next), 150);
+  };
+
+  const offsetYCommitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onOffsetYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextOffsetY = Number(e.target.value);
+    const next = { ...edit, offsetY: nextOffsetY };
+    onDragUpdate(next);
+    if (offsetYCommitTimer.current) clearTimeout(offsetYCommitTimer.current);
+    offsetYCommitTimer.current = setTimeout(() => onUpdate(next), 150);
+  };
+
+  // Pan slider range: generous enough to push the image entirely off either
+  // side of the crop frame at any scale. 2× the larger of frame/image should
+  // cover any realistic use.
+  const panRangeX = Math.max(FRAME_W, edit.naturalWidth) * 2;
+  const panRangeY = Math.max(FRAME_H, edit.naturalHeight) * 2;
+
   const reset = () => {
     onUpdate({ ...edit, scale: 1, offsetX: 0, offsetY: 0, rotation: 0 });
   };
@@ -332,7 +356,7 @@ export default function ImageEditor({
         </div>
 
         <div className="flex items-center gap-3 px-2">
-          <span className="text-sm text-gray-700 shrink-0">{t('image.rotate')}</span>
+          <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.rotate')}</span>
           <input
             type="range"
             min={0}
@@ -351,11 +375,61 @@ export default function ImageEditor({
             step={1}
             value={Math.round(edit.rotation)}
             onChange={onRotationChange}
-            className="w-16 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
             aria-label={t('image.rotate')}
             dir="ltr"
           />
-          <span className="font-mono text-xs text-gray-500 shrink-0">°</span>
+          <span className="font-mono text-xs text-gray-500 shrink-0 w-4">°</span>
+        </div>
+
+        <div className="flex items-center gap-3 px-2">
+          <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.horizontal')}</span>
+          <input
+            type="range"
+            min={-panRangeX}
+            max={panRangeX}
+            step={1}
+            value={edit.offsetX}
+            onChange={onOffsetXChange}
+            className="flex-1"
+            aria-label={t('image.horizontal')}
+            dir="ltr"
+          />
+          <input
+            type="number"
+            step={1}
+            value={Math.round(edit.offsetX)}
+            onChange={onOffsetXChange}
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            aria-label={t('image.horizontal')}
+            dir="ltr"
+          />
+          <span className="font-mono text-xs text-gray-500 shrink-0 w-4">px</span>
+        </div>
+
+        <div className="flex items-center gap-3 px-2">
+          <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.vertical')}</span>
+          <input
+            type="range"
+            min={-panRangeY}
+            max={panRangeY}
+            step={1}
+            value={edit.offsetY}
+            onChange={onOffsetYChange}
+            className="flex-1"
+            aria-label={t('image.vertical')}
+            dir="ltr"
+          />
+          <input
+            type="number"
+            step={1}
+            value={Math.round(edit.offsetY)}
+            onChange={onOffsetYChange}
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            aria-label={t('image.vertical')}
+            dir="ltr"
+          />
+          <span className="font-mono text-xs text-gray-500 shrink-0 w-4">px</span>
         </div>
       </div>
     </div>
