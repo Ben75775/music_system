@@ -239,16 +239,16 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — always at least as big as the image at natural pixels.
-          No maximum cap: if the image is larger than the browser window, the page
-          scrolls. User asked: don't clamp resolution. */}
+      {/* Editor viewport — shows the crop frame centered with the user's image
+          beneath it. Always at least the crop frame's size; caps at the browser
+          window so we don't force page scroll. */}
       <div className="flex justify-center">
         <div
           ref={viewportRef}
           className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: `max(${FRAME_W}px, ${edit.naturalWidth}px)`,
-            height: `max(${FRAME_H}px, ${edit.naturalHeight}px)`,
+            width: `min(${FRAME_W * 1.4}px, 95vw)`,
+            height: `min(${FRAME_H * 1.2}px, 85vh)`,
           }}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
