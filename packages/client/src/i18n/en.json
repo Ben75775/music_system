@@ -48,8 +48,7 @@
     "tiktok": "TikTok / Reels / Stories",
     "square": "Instagram post / square",
     "classic": "Classic / old TV",
-    "portrait": "Portrait photo",
-    "changeConfirm": "Changing the project format will reset all crop regions. Continue?"
+    "portrait": "Portrait photo"
   },
   "crop": {
     "presets": "Crop",

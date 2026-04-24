@@ -7,6 +7,7 @@ import AddClipForm from './AddClipForm';
 import AspectPicker from './AspectPicker';
 import { arrayMove } from '../lib/array-move';
 import { guessAspect } from '../lib/aspect';
+import { defaultCropForAspect } from '../lib/crop';
 
 interface ProjectViewProps {
   project: Project;
@@ -51,16 +52,42 @@ export default function ProjectView({
 
   const addClip = useCallback(
     (clip: Clip) => {
-      if (clip.type !== project.mode) return; // AddClipForm already guards, defensive.
-      let next: Project = { ...project, clips: [...project.clips, clip] };
+      if (clip.type !== project.mode) return;
+      let nextClip = clip;
+      let nextAspect = project.aspect;
+
+      // On first video clip, auto-guess the aspect.
       if (
         project.mode === 'video' &&
-        !project.aspect &&
+        !nextAspect &&
         clip.sourceWidth &&
         clip.sourceHeight
       ) {
-        next = { ...next, aspect: guessAspect(clip.sourceWidth, clip.sourceHeight) };
+        nextAspect = guessAspect(clip.sourceWidth, clip.sourceHeight);
       }
+
+      // For every video clip with known source dimensions, apply a default centered crop
+      // matching the project aspect — so the UI has a live preview immediately.
+      if (
+        project.mode === 'video' &&
+        nextAspect &&
+        clip.sourceWidth &&
+        clip.sourceHeight
+      ) {
+        nextClip = {
+          ...clip,
+          crop: defaultCropForAspect(
+            { w: clip.sourceWidth, h: clip.sourceHeight },
+            nextAspect
+          ),
+        };
+      }
+
+      const next: Project = {
+        ...project,
+        clips: [...project.clips, nextClip],
+        aspect: nextAspect,
+      };
       onUpdateProject(next);
       setSelectedId(clip.id);
     },
@@ -108,13 +135,17 @@ export default function ProjectView({
           <p className="text-sm font-medium text-gray-700">{t('aspect.title')}</p>
           <AspectPicker
             value={project.aspect}
-            locked={project.clips.length > 0 && project.aspect !== undefined}
-            onChange={(a) => onUpdateProject({ ...project, aspect: a })}
-            onRequestChangeWhileLocked={() => {
-              if (confirm(t('aspect.changeConfirm'))) {
-                const clips = project.clips.map((c) => ({ ...c, crop: undefined }));
-                onUpdateProject({ ...project, clips, aspect: undefined });
-              }
+            onChange={(a) => {
+              const clips = project.clips.map((c) => {
+                if (c.type === 'video' && c.sourceWidth && c.sourceHeight) {
+                  return {
+                    ...c,
+                    crop: defaultCropForAspect({ w: c.sourceWidth, h: c.sourceHeight }, a),
+                  };
+                }
+                return c;
+              });
+              onUpdateProject({ ...project, aspect: a, clips });
             }}
           />
         </div>

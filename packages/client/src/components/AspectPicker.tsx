@@ -3,9 +3,7 @@ import type { Aspect } from 'shared/types';
 
 interface AspectPickerProps {
   value: Aspect | undefined;
-  locked: boolean;
   onChange: (aspect: Aspect) => void;
-  onRequestChangeWhileLocked: () => void;
 }
 
 const OPTIONS: Array<{
@@ -21,21 +19,8 @@ const OPTIONS: Array<{
   { aspect: '3:4', nameKey: 'aspect.portrait', w: 24, h: 32 },
 ];
 
-export default function AspectPicker({
-  value,
-  locked,
-  onChange,
-  onRequestChangeWhileLocked,
-}: AspectPickerProps) {
+export default function AspectPicker({ value, onChange }: AspectPickerProps) {
   const { t } = useTranslation();
-
-  const pick = (a: Aspect) => {
-    if (locked && value !== a) {
-      onRequestChangeWhileLocked();
-      return;
-    }
-    onChange(a);
-  };
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -45,7 +30,7 @@ export default function AspectPicker({
           <button
             key={aspect}
             type="button"
-            onClick={() => pick(aspect)}
+            onClick={() => onChange(aspect)}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-lg border text-sm
               ${isSelected
