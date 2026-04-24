@@ -19,9 +19,6 @@ interface ImageEditorProps {
 
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 16;
-/** Visual scale factor for the preview. Output is always 1034×1379;
- *  this only shrinks the on-screen representation so the frame fits. */
-const DISPLAY_SCALE = 0.5;
 
 export default function ImageEditor({
   edit,
@@ -101,6 +98,34 @@ export default function ImageEditor({
     editRef.current = edit;
   }, [edit]);
 
+  // Track browser window size so we can recompute the display scale when the
+  // user resizes their window.
+  const [winSize, setWinSize] = useState({
+    w: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    h: typeof window !== 'undefined' ? window.innerHeight : 1080,
+  });
+  useEffect(() => {
+    const onResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Dynamic display scale: the stage intrinsic size must accommodate BOTH the
+  // whole image (naturalWidth × naturalHeight) AND the crop frame with some
+  // padding. We then shrink the stage uniformly so it fits comfortably in the
+  // browser window. The export math is unaffected — canvas is always 1034×1379.
+  const stageW = Math.max(FRAME_W * 1.2, edit.naturalWidth);
+  const stageH = Math.max(FRAME_H * 1.1, edit.naturalHeight);
+  const displayScale = Math.min(
+    1,
+    (winSize.w * 0.85) / stageW,
+    (winSize.h * 0.75) / stageH
+  );
+  const displayScaleRef = useRef(displayScale);
+  useEffect(() => {
+    displayScaleRef.current = displayScale;
+  }, [displayScale]);
+
   // Wheel zoom — attach a NON-passive native listener so we can call preventDefault
   // (React synthetic onWheel is passive by default, so e.preventDefault() there
   // is a no-op and the browser scrolls the page behind the editor). Non-passive
@@ -131,13 +156,15 @@ export default function ImageEditor({
     const startOffsetY = edit.offsetY;
 
     const onMove = (ev: MouseEvent) => {
-      const dx = (ev.clientX - startX) / DISPLAY_SCALE;
-      const dy = (ev.clientY - startY) / DISPLAY_SCALE;
+      const s = displayScaleRef.current || 1;
+      const dx = (ev.clientX - startX) / s;
+      const dy = (ev.clientY - startY) / s;
       onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
     };
     const onUp = (ev: MouseEvent) => {
-      const dx = (ev.clientX - startX) / DISPLAY_SCALE;
-      const dy = (ev.clientY - startY) / DISPLAY_SCALE;
+      const s = displayScaleRef.current || 1;
+      const dx = (ev.clientX - startX) / s;
+      const dy = (ev.clientY - startY) / s;
       onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -160,14 +187,16 @@ export default function ImageEditor({
       const onMove = (ev: TouchEvent) => {
         if (ev.touches.length !== 1) return;
         ev.preventDefault();
-        const dx = (ev.touches[0].clientX - startX) / DISPLAY_SCALE;
-        const dy = (ev.touches[0].clientY - startY) / DISPLAY_SCALE;
+        const s = displayScaleRef.current || 1;
+        const dx = (ev.touches[0].clientX - startX) / s;
+        const dy = (ev.touches[0].clientY - startY) / s;
         onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       };
       const onEnd = (ev: TouchEvent) => {
         const last = ev.changedTouches[0];
-        const dx = (last.clientX - startX) / DISPLAY_SCALE;
-        const dy = (last.clientY - startY) / DISPLAY_SCALE;
+        const s = displayScaleRef.current || 1;
+        const dx = (last.clientX - startX) / s;
+        const dy = (last.clientY - startY) / s;
         onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
@@ -242,21 +271,22 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — smaller on-screen preview of the 1034×1379 crop.
-          Proportions are 1:1 with the output; only visual size shrinks
-          by DISPLAY_SCALE. Mouse/touch drag deltas compensate. */}
+      {/* Editor viewport — sized to show the whole image (up to the browser
+          limit). displayScale is computed dynamically so the whole stage
+          (image + crop frame) fits. Proportions stay 1:1 with the 1034×1379
+          export; only visual size shrinks. */}
       <div className="flex justify-center">
         <div
           ref={viewportRef}
           className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: FRAME_W * 1.4 * DISPLAY_SCALE,
-            height: FRAME_H * 1.2 * DISPLAY_SCALE,
+            width: stageW * displayScale,
+            height: stageH * displayScale,
           }}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
         >
-          {/* Image — the same transform the export canvas uses, scaled for display. */}
+          {/* Image — source-pixel coords scaled by displayScale. */}
           <img
             src={edit.src}
             alt=""
@@ -265,19 +295,18 @@ export default function ImageEditor({
             style={{
               width: edit.naturalWidth,
               height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX * DISPLAY_SCALE}px, ${edit.offsetY * DISPLAY_SCALE}px) rotate(${edit.rotation}deg) scale(${edit.scale * DISPLAY_SCALE})`,
+              transform: `translate(-50%, -50%) translate(${edit.offsetX * displayScale}px, ${edit.offsetY * displayScale}px) rotate(${edit.rotation}deg) scale(${edit.scale * displayScale})`,
               transformOrigin: 'center',
             }}
           />
-          {/* Crop-area indicator — dims what's outside the 1034×1379 region.
-              No border, no background; just the dim veil around the crop. */}
+          {/* Crop-area indicator — dims what's outside the 1034×1379 region. */}
           <div
             style={{
               position: 'absolute',
-              width: FRAME_W * DISPLAY_SCALE,
-              height: FRAME_H * DISPLAY_SCALE,
-              left: `calc(50% - ${(FRAME_W * DISPLAY_SCALE) / 2}px)`,
-              top: `calc(50% - ${(FRAME_H * DISPLAY_SCALE) / 2}px)`,
+              width: FRAME_W * displayScale,
+              height: FRAME_H * displayScale,
+              left: `calc(50% - ${(FRAME_W * displayScale) / 2}px)`,
+              top: `calc(50% - ${(FRAME_H * displayScale) / 2}px)`,
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
             }}

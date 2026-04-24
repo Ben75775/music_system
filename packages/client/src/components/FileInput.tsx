@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, ImageEdit } from 'shared/types';
 import { DEFAULT_EFFECTS } from 'shared/types';
-import { FRAME_W, FRAME_H } from '../lib/image-fit';
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const AV_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
@@ -41,19 +40,15 @@ export default function FileInput({ onFileReady, onImageReady }: FileInputProps)
           const { naturalWidth, naturalHeight } = await readImageNaturalSize(url);
           const dot = file.name.lastIndexOf('.');
           const name = dot > 0 ? file.name.slice(0, dot) : file.name;
-          // Cover-fit on upload: scale so the image fills the 1034×1379 crop frame
-          // (its shorter dimension matches the longer frame dimension). User sees
-          // their image filling the work area; zoom out with the wheel if needed.
-          const coverScale = Math.max(
-            FRAME_W / naturalWidth,
-            FRAME_H / naturalHeight
-          );
+          // Upload at natural pixel size (scale=1). The editor shows the whole
+          // image with the 1034×1379 crop rectangle overlaid; user pans/zooms
+          // to position. Fit / Reset buttons let them fill the frame later.
           onImageReady({
             src: url,
             name,
             naturalWidth,
             naturalHeight,
-            scale: coverScale,
+            scale: 1,
             offsetX: 0,
             offsetY: 0,
             rotation: 0,
