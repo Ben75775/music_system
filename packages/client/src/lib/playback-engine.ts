@@ -13,6 +13,7 @@ export interface PlaybackEngine {
   /** The active clip's <video>/<audio> ref should be attached to the element in the DOM. */
   bindActiveElement: (el: HTMLMediaElement | null) => void;
   activeClipId: string;
+  nextClipId: string;
 }
 
 export function usePlaybackEngine(project: Project): PlaybackEngine {
@@ -48,7 +49,12 @@ export function usePlaybackEngine(project: Project): PlaybackEngine {
     el.volume = Math.max(0, Math.min(1, clip.effects.volume || 1));
   }, [activeClipId, mapping.index, mapping.localTime, project.clips]);
 
-  useEffect(() => { sync(); }, [sync]);
+  useEffect(() => {
+    const el = elementsRef.current.get(activeClipId);
+    if (!el) return;
+    sync();
+    if (isPlaying) el.play().catch(() => {});
+  }, [activeClipId, isPlaying, sync]);
 
   const tick = useCallback(() => {
     const now = performance.now();
@@ -61,9 +67,15 @@ export function usePlaybackEngine(project: Project): PlaybackEngine {
       el?.pause();
       return;
     }
+    const nextMapping = projectTimeToClip(project.clips, nextProjectTime);
+    if (nextMapping.clipId !== activeClipId) {
+      const oldEl = elementsRef.current.get(activeClipId);
+      oldEl?.pause();
+      // The incoming element's play() is triggered by the sync effect (see #3).
+    }
     setProjectTime(nextProjectTime);
     rafRef.current = requestAnimationFrame(tick);
-  }, [total, activeClipId]);
+  }, [total, activeClipId, project.clips]);
 
   const play = useCallback(() => {
     if (total === 0) return;
@@ -100,6 +112,9 @@ export function usePlaybackEngine(project: Project): PlaybackEngine {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
 
+  const nextIndex = mapping.index + 1;
+  const nextClip = project.clips[nextIndex];
+
   return {
     isPlaying,
     projectTime,
@@ -110,5 +125,6 @@ export function usePlaybackEngine(project: Project): PlaybackEngine {
     seek,
     bindActiveElement,
     activeClipId,
+    nextClipId: nextClip?.id ?? '',
   };
 }
