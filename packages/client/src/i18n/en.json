@@ -33,7 +33,7 @@
     "exporting": "Processing...",
     "loadingFFmpeg": "Loading editor engine...",
     "ready": "Ready",
-    "advancedEditor": "Need more tools?"
+    "advancedEditor": "Need more tools? →"
   },
   "project": {
     "empty": "Project has no clips",
@@ -41,7 +41,8 @@
     "addClipFile": "Add file to project",
     "removeClip": "Remove clip",
     "audioOnly": "Audio projects only accept MP3 files",
-    "videoOnly": "Video projects only accept MP4 files"
+    "videoOnly": "Video projects only accept MP4 files",
+    "discardConfirm": "Discard this project and start over?"
   },
   "aspect": {
     "title": "Project format",

@@ -15,7 +15,6 @@ interface TrackEditorProps {
   onUpdateClip: (clip: Clip) => void;
   /** Continuous drag change -- updates value without creating undo entry */
   onDragUpdateClip: (clip: Clip) => void;
-  onBack: () => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -29,15 +28,12 @@ export default function TrackEditor({
   project,
   onUpdateClip,
   onDragUpdateClip,
-  onBack,
   onUndo,
   onRedo,
   canUndo,
   canRedo,
   engineBind,
 }: TrackEditorProps) {
-  const { t } = useTranslation();
-
   // Ctrl+Z / Ctrl+Y keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -67,12 +63,6 @@ export default function TrackEditor({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button
-            onClick={onBack}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            {t('editor.back')}
-          </button>
           <button
             onClick={onUndo}
             disabled={!canUndo}

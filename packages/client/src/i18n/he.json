@@ -33,7 +33,7 @@
     "exporting": "מעבד...",
     "loadingFFmpeg": "טוען מנוע עריכה...",
     "ready": "מוכן",
-    "advancedEditor": "עוד כלים?"
+    "advancedEditor": "צריכים עוד כלים? →"
   },
   "project": {
     "empty": "אין קליפים בפרויקט",
@@ -41,7 +41,8 @@
     "addClipFile": "הוספת קובץ",
     "removeClip": "הסרת קליפ",
     "audioOnly": "פרויקט אודיו מקבל רק קובצי MP3",
-    "videoOnly": "פרויקט וידאו מקבל רק קובצי MP4"
+    "videoOnly": "פרויקט וידאו מקבל רק קובצי MP4",
+    "discardConfirm": "למחוק את הפרויקט ולהתחיל מחדש?"
   },
   "aspect": {
     "title": "פורמט הפרויקט",

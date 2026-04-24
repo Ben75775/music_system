@@ -146,6 +146,19 @@ export default function ProjectView({
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-4 p-4">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => {
+            if (project.clips.length > 0 && !confirm(t('project.discardConfirm'))) return;
+            onBack();
+          }}
+          className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
+        >
+          ← {t('editor.back')}
+        </button>
+      </div>
+
       <div className="bg-white border border-gray-200 rounded-xl p-3">
         <MasterTimeline
           clips={project.clips}
@@ -200,7 +213,6 @@ export default function ProjectView({
             }
             onUpdateClip={updateClip}
             onDragUpdateClip={dragUpdateClip}
-            onBack={onBack}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={canUndo}
