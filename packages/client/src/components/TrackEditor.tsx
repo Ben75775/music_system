@@ -304,12 +304,13 @@ function VideoEditor({
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
         <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
-        <CropOverlay
-          clip={clip}
-          project={project}
-          onCropChange={(crop) => onUpdateClip({ ...clip, crop })}
-        />
       </div>
+
+      <CropOverlay
+        clip={clip}
+        project={project}
+        onCropChange={(crop) => onUpdateClip({ ...clip, crop })}
+      />
 
       {/* Export */}
       <div className="flex justify-center pt-4">
