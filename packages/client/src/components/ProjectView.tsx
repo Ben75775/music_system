@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, Project } from 'shared/types';
 import TrackEditor from './TrackEditor';
@@ -11,6 +11,7 @@ import { defaultCropForAspect } from '../lib/crop';
 import MasterTimeline from './MasterTimeline';
 import { usePlaybackEngine } from '../lib/playback-engine';
 import ExportButton from './ExportButton';
+import { clipTimeToProject } from '../lib/project-time';
 
 interface ProjectViewProps {
   project: Project;
@@ -34,8 +35,6 @@ export default function ProjectView({
   canRedo,
 }: ProjectViewProps) {
   const { t } = useTranslation();
-  const [selectedId, setSelectedId] = useState<string>(project.clips[0]?.id ?? '');
-  const selected = project.clips.find((c) => c.id === selectedId) ?? project.clips[0];
 
   const engine = usePlaybackEngine(project);
   const totalSize = project.clips.reduce((s, c) => s + (c.file?.size ?? 0), 0);
@@ -52,8 +51,7 @@ export default function ProjectView({
     return () => window.removeEventListener('keydown', handler);
   }, [engine]);
 
-  const displayedClipId = engine.isPlaying ? engine.activeClipId : selectedId;
-  const displayed = project.clips.find((c) => c.id === displayedClipId) ?? project.clips[0];
+  const active = project.clips.find((c) => c.id === engine.activeClipId) ?? project.clips[0];
 
   const updateClip = useCallback(
     (next: Clip) => {
@@ -110,27 +108,20 @@ export default function ProjectView({
         aspect: nextAspect,
       };
       onUpdateProject(next);
-      setSelectedId(clip.id);
     },
     [project, onUpdateProject]
   );
 
   const removeClip = useCallback(
     (id: string) => {
-      const idx = project.clips.findIndex((c) => c.id === id);
-      if (idx < 0) return;
       const nextClips = project.clips.filter((c) => c.id !== id);
       onUpdateProject({ ...project, clips: nextClips });
       if (nextClips.length === 0) {
         onBack();
-        return;
       }
-      if (selectedId === id) {
-        const fallback = nextClips[Math.max(0, idx - 1)];
-        setSelectedId(fallback?.id ?? '');
-      }
+      // No need to manage selectedId — engine.activeClipId derives from projectTime.
     },
-    [project, onUpdateProject, selectedId, onBack]
+    [project, onUpdateProject, onBack]
   );
 
   const reorderClips = useCallback(
@@ -140,7 +131,7 @@ export default function ProjectView({
     [project, onUpdateProject]
   );
 
-  if (!selected) {
+  if (!active) {
     return (
       <div className="p-8 text-center text-gray-500">{t('project.empty')}</div>
     );
@@ -198,8 +189,12 @@ export default function ProjectView({
           <AddClipForm mode={project.mode} onClipReady={addClip} />
           <ClipList
             clips={project.clips}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
+            selectedId={engine.activeClipId}
+            onSelect={(id) => {
+              const idx = project.clips.findIndex((c) => c.id === id);
+              if (idx < 0) return;
+              engine.seek(clipTimeToProject(project.clips, idx, 0));
+            }}
             onRemove={removeClip}
             onReorder={reorderClips}
           />
@@ -208,11 +203,9 @@ export default function ProjectView({
         {/* Per-clip editor */}
         <section>
           <TrackEditor
-            clip={displayed}
+            clip={active}
             project={project}
-            engineBind={
-              displayed.id === engine.activeClipId ? engine.bindActiveElement : undefined
-            }
+            engineBind={engine.bindActiveElement}
             onUpdateClip={updateClip}
             onDragUpdateClip={dragUpdateClip}
             onUndo={onUndo}

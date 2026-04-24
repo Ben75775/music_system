@@ -1,8 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, TrackEffect, Project } from 'shared/types';
-import CropOverlay, { videoCropStyle } from './CropOverlay';
 import CropRectangle from './CropRectangle';
+import { cropToCss } from '../lib/crop';
 import { useWaveSurfer } from '../hooks/useWaveSurfer';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { useSpacebar } from '../hooks/useSpacebar';
@@ -275,7 +275,7 @@ function VideoEditor({
           ref={(el) => { bind(el); engineBind?.(el); }}
           src={clip.url}
           className="w-full max-h-[400px] mx-auto"
-          style={videoCropStyle(clip)}
+          style={clip.crop ? cropToCss(clip.crop) : undefined}
         />
         {/* Black overlay for visual fade in/out */}
         <VideoFadeOverlay
@@ -312,11 +312,6 @@ function VideoEditor({
         <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
       </div>
 
-      <CropOverlay
-        clip={clip}
-        project={project}
-        onCropChange={(crop) => onUpdateClip({ ...clip, crop })}
-      />
     </>
   );
 }
