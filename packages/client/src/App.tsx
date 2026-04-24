@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import FileInput from './components/FileInput';
 import ImageEditor from './components/ImageEditor';
 import ProjectView from './components/ProjectView';
+import YoutubeThumbnail from './components/YoutubeThumbnail';
 import { useHistory } from './hooks/useHistory';
 import type { Clip, ImageEdit, Project } from 'shared/types';
 
@@ -51,6 +52,7 @@ export default function App() {
             onFileReady={handleFileReady}
             onImageReady={handleImageReady}
           />
+          <YoutubeThumbnail />
         </div>
       ) : imageEdit ? (
         <ImageEditor

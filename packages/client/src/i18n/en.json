@@ -44,6 +44,15 @@
     "download": "Download PNG",
     "instructions": "Drag to reposition. Scroll to zoom."
   },
+  "youtubeThumb": {
+    "title": "Download YouTube thumbnail",
+    "subtitle": "Paste a YouTube URL to save its thumbnail at the highest available resolution.",
+    "placeholder": "https://www.youtube.com/watch?v=...",
+    "download": "Download thumbnail",
+    "loading": "Fetching…",
+    "invalidUrl": "That doesn't look like a valid YouTube URL.",
+    "error": "Could not fetch the thumbnail. Check the URL and your connection."
+  },
   "project": {
     "empty": "Project has no clips",
     "clipListPlaceholder": "Clip list (coming soon)",
