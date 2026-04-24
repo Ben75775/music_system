@@ -44,8 +44,8 @@ export function clampOffset(params: {
   const { effW, effH } = effectiveDims(naturalW, naturalH, rotation);
   const displayedW = effW * cover * scale;
   const displayedH = effH * cover * scale;
-  const maxX = Math.max(0, (displayedW - FRAME_W) / 2);
-  const maxY = Math.max(0, (displayedH - FRAME_H) / 2);
+  const maxX = Math.abs(displayedW - FRAME_W) / 2;
+  const maxY = Math.abs(displayedH - FRAME_H) / 2;
   return {
     offsetX: Math.max(-maxX, Math.min(maxX, offsetX)),
     offsetY: Math.max(-maxY, Math.min(maxY, offsetY)),

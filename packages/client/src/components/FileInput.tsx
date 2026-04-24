@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, ImageEdit } from 'shared/types';
 import { DEFAULT_EFFECTS } from 'shared/types';
+import { baseCoverScale } from '../lib/image-fit';
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const AV_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
@@ -45,7 +46,7 @@ export default function FileInput({ onFileReady, onImageReady }: FileInputProps)
             name,
             naturalWidth,
             naturalHeight,
-            scale: 1,
+            scale: 1 / baseCoverScale(naturalWidth, naturalHeight, 0),
             offsetX: 0,
             offsetY: 0,
             rotation: 0,

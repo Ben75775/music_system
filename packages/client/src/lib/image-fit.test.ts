@@ -113,4 +113,33 @@ describe('clampOffset', () => {
     expect(r.offsetX).toBe(0);
     expect(r.offsetY).toBeCloseTo(344.5, 1);
   });
+
+  it('allows offset when image is smaller than frame (underflow)', () => {
+    // 400x400 source into 1034x1379 frame. Cover scale = max(1034/400, 1379/400) = 3.4475.
+    // With scale = 0.5 (user zoom out), total = 3.4475 * 0.5 = 1.72375. displayed = 400 * 1.72375 = 689.5.
+    // Since 689.5 < 1034: underflow. max|offsetX| = (1034 - 689.5) / 2 = 172.25.
+    const r = clampOffset({
+      naturalW: 400,
+      naturalH: 400,
+      rotation: 0,
+      scale: 0.5,
+      offsetX: 500,
+      offsetY: 0,
+    });
+    expect(r.offsetX).toBeCloseTo(172.25, 1);
+    expect(r.offsetY).toBeCloseTo(0, 1);
+  });
+
+  it('underflow allows offset on the shrunken axis', () => {
+    // Same 400x400, scale 0.5. displayedH = 689.5, frame = 1379, max = 344.75.
+    const r = clampOffset({
+      naturalW: 400,
+      naturalH: 400,
+      rotation: 0,
+      scale: 0.5,
+      offsetX: 0,
+      offsetY: 500,
+    });
+    expect(r.offsetY).toBeCloseTo(344.75, 1);
+  });
 });

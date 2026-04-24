@@ -78,10 +78,14 @@ export default function ImageEditor({
   };
 
   const center = () => {
+    onUpdate({ ...edit, offsetX: 0, offsetY: 0 });
+  };
+
+  const fit = () => {
     onUpdate({ ...edit, scale: 1, offsetX: 0, offsetY: 0 });
   };
 
-  const MIN_SCALE = 1;
+  const MIN_SCALE = 0.05;
   const MAX_SCALE = 8;
 
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -315,6 +319,12 @@ export default function ImageEditor({
           className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
         >
           {t('image.center')}
+        </button>
+        <button
+          onClick={fit}
+          className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+        >
+          {t('image.fit')}
         </button>
         <button
           onClick={rotate}
