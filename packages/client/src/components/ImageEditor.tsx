@@ -90,6 +90,34 @@ export default function ImageEditor({
   };
 
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  // Keep a live ref to the current edit so the native wheel listener (below) can
+  // read fresh state without having to be re-attached on every edit change.
+  const editRef = useRef(edit);
+  useEffect(() => {
+    editRef.current = edit;
+  }, [edit]);
+
+  // Wheel zoom — attach a NON-passive native listener so we can call preventDefault
+  // (React synthetic onWheel is passive by default, so e.preventDefault() there
+  // is a no-op and the browser scrolls the page behind the editor). Non-passive
+  // captures the wheel on the viewport only; outside it, the page scrolls normally.
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const handler = (ev: WheelEvent) => {
+      ev.preventDefault();
+      const current = editRef.current;
+      const factor = Math.pow(1.0015, -ev.deltaY);
+      const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, current.scale * factor));
+      const next = { ...current, scale: nextScale };
+      onDragUpdate(next);
+      if (wheelTimer.current) clearTimeout(wheelTimer.current);
+      wheelTimer.current = setTimeout(() => onUpdate(next), 150);
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [onDragUpdate, onUpdate]);
 
   // Mouse pan — track drag start state, emit onDragUpdate during, onUpdate on release.
   const onMouseDown = (e: React.MouseEvent) => {
@@ -113,17 +141,6 @@ export default function ImageEditor({
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  };
-
-  // Wheel zoom — continuous updates via onDragUpdate, commit on short idle.
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = Math.pow(1.0015, -e.deltaY);
-    const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, edit.scale * factor));
-    const next = { ...edit, scale: nextScale };
-    onDragUpdate(next);
-    if (wheelTimer.current) clearTimeout(wheelTimer.current);
-    wheelTimer.current = setTimeout(() => onUpdate(next), 150);
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -222,17 +239,18 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — sized to accommodate the image at natural pixels,
-          up to 95vw × 85vh on small screens. Never smaller than the crop frame. */}
+      {/* Editor viewport — always at least as big as the image at natural pixels.
+          No maximum cap: if the image is larger than the browser window, the page
+          scrolls. User asked: don't clamp resolution. */}
       <div className="flex justify-center">
         <div
+          ref={viewportRef}
           className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: `min(max(${FRAME_W}px, ${edit.naturalWidth}px), 95vw)`,
-            height: `min(max(${FRAME_H}px, ${edit.naturalHeight}px), 85vh)`,
+            width: `max(${FRAME_W}px, ${edit.naturalWidth}px)`,
+            height: `max(${FRAME_H}px, ${edit.naturalHeight}px)`,
           }}
           onMouseDown={onMouseDown}
-          onWheel={onWheel}
           onTouchStart={onTouchStart}
         >
           {/* Image at natural pixel size, centered, with user transform applied */}
