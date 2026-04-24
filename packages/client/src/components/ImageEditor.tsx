@@ -98,31 +98,6 @@ export default function ImageEditor({
     editRef.current = edit;
   }, [edit]);
 
-  // Display scale: shrink the on-screen representation of the 1034×1379 frame
-  // to fit comfortably in the browser window. The export math is unaffected
-  // (the canvas is always 1034×1379). Mouse/touch drag deltas divide by this
-  // factor to convert screen pixels back to source pixels.
-  const [displayScale, setDisplayScale] = useState(1);
-  useEffect(() => {
-    const recompute = () => {
-      // Want the scaled frame to fit in ~70% of the viewport height and
-      // ~65% of the viewport width, whichever is tighter.
-      const s = Math.min(
-        1,
-        (window.innerWidth * 0.65) / FRAME_W,
-        (window.innerHeight * 0.7) / FRAME_H
-      );
-      setDisplayScale(s);
-    };
-    recompute();
-    window.addEventListener('resize', recompute);
-    return () => window.removeEventListener('resize', recompute);
-  }, []);
-  const displayScaleRef = useRef(displayScale);
-  useEffect(() => {
-    displayScaleRef.current = displayScale;
-  }, [displayScale]);
-
   // Wheel zoom — attach a NON-passive native listener so we can call preventDefault
   // (React synthetic onWheel is passive by default, so e.preventDefault() there
   // is a no-op and the browser scrolls the page behind the editor). Non-passive
@@ -153,15 +128,13 @@ export default function ImageEditor({
     const startOffsetY = edit.offsetY;
 
     const onMove = (ev: MouseEvent) => {
-      const s = displayScaleRef.current || 1;
-      const dx = (ev.clientX - startX) / s;
-      const dy = (ev.clientY - startY) / s;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
       onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
     };
     const onUp = (ev: MouseEvent) => {
-      const s = displayScaleRef.current || 1;
-      const dx = (ev.clientX - startX) / s;
-      const dy = (ev.clientY - startY) / s;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
       onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -184,16 +157,14 @@ export default function ImageEditor({
       const onMove = (ev: TouchEvent) => {
         if (ev.touches.length !== 1) return;
         ev.preventDefault();
-        const s = displayScaleRef.current || 1;
-        const dx = (ev.touches[0].clientX - startX) / s;
-        const dy = (ev.touches[0].clientY - startY) / s;
+        const dx = ev.touches[0].clientX - startX;
+        const dy = ev.touches[0].clientY - startY;
         onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       };
       const onEnd = (ev: TouchEvent) => {
         const last = ev.changedTouches[0];
-        const s = displayScaleRef.current || 1;
-        const dx = (last.clientX - startX) / s;
-        const dy = (last.clientY - startY) / s;
+        const dx = last.clientX - startX;
+        const dy = last.clientY - startY;
         onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
@@ -268,22 +239,23 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — visually scaled-down so the crop frame fits the
-          browser comfortably. Source-space math (1034×1379 frame, image scale)
-          is unchanged; only the CSS transform scales the rendered pixels. */}
+      {/* Editor viewport — WYSIWYG. The crop frame is rendered at exactly
+          1034×1379 CSS pixels and the image transform matches the export
+          canvas. What you see inside the white rectangle is what you download.
+          Some padding around the frame lets you see what falls outside. The
+          page scrolls if this exceeds the browser window. */}
       <div className="flex justify-center">
         <div
           ref={viewportRef}
           className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: FRAME_W * 1.4 * displayScale,
-            height: FRAME_H * 1.2 * displayScale,
+            width: FRAME_W * 1.4,
+            height: FRAME_H * 1.2,
           }}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
         >
-          {/* Image — source-pixel coords times the display scale so everything
-              inside the viewport shares the same on-screen factor. */}
+          {/* Image — source-pixel coords, exactly matching export math. */}
           <img
             src={edit.src}
             alt=""
@@ -292,18 +264,18 @@ export default function ImageEditor({
             style={{
               width: edit.naturalWidth,
               height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX * displayScale}px, ${edit.offsetY * displayScale}px) rotate(${edit.rotation}deg) scale(${edit.scale * displayScale})`,
+              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
               transformOrigin: 'center',
             }}
           />
-          {/* Crop frame indicator — scaled to match the display factor */}
+          {/* Crop frame indicator — 1034×1379 exact. */}
           <div
             style={{
               position: 'absolute',
-              width: FRAME_W * displayScale,
-              height: FRAME_H * displayScale,
-              left: `calc(50% - ${(FRAME_W * displayScale) / 2}px)`,
-              top: `calc(50% - ${(FRAME_H * displayScale) / 2}px)`,
+              width: FRAME_W,
+              height: FRAME_H,
+              left: `calc(50% - ${FRAME_W / 2}px)`,
+              top: `calc(50% - ${FRAME_H / 2}px)`,
               border: '2px solid white',
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
