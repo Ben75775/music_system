@@ -137,6 +137,96 @@ export default function ImageEditor({
     wheelTimer.current = setTimeout(() => onUpdate(next), 150);
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) return;
+    e.preventDefault();
+
+    const frameEl = e.currentTarget as HTMLElement;
+    const rect = frameEl.getBoundingClientRect();
+    const screenToSource = FRAME_W / rect.width;
+
+    if (e.touches.length === 1) {
+      // Single-touch pan
+      const startX = e.touches[0].clientX;
+      const startY = e.touches[0].clientY;
+      const startOffsetX = edit.offsetX;
+      const startOffsetY = edit.offsetY;
+
+      const onMove = (ev: TouchEvent) => {
+        if (ev.touches.length !== 1) return;
+        ev.preventDefault();
+        const dx = (ev.touches[0].clientX - startX) * screenToSource;
+        const dy = (ev.touches[0].clientY - startY) * screenToSource;
+        const clamped = clampOffset({
+          naturalW: edit.naturalWidth,
+          naturalH: edit.naturalHeight,
+          rotation: edit.rotation,
+          scale: edit.scale,
+          offsetX: startOffsetX + dx,
+          offsetY: startOffsetY + dy,
+        });
+        onDragUpdate({ ...edit, ...clamped });
+      };
+      const onEnd = (ev: TouchEvent) => {
+        const last = ev.changedTouches[0];
+        const dx = (last.clientX - startX) * screenToSource;
+        const dy = (last.clientY - startY) * screenToSource;
+        const clamped = clampOffset({
+          naturalW: edit.naturalWidth,
+          naturalH: edit.naturalHeight,
+          rotation: edit.rotation,
+          scale: edit.scale,
+          offsetX: startOffsetX + dx,
+          offsetY: startOffsetY + dy,
+        });
+        onUpdate({ ...edit, ...clamped });
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
+        window.removeEventListener('touchcancel', onEnd);
+      };
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('touchcancel', onEnd);
+    } else if (e.touches.length >= 2) {
+      // Two-touch pinch zoom
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const startDist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      const startScale = edit.scale;
+      let lastNext: ImageEdit = edit;
+
+      const onMove = (ev: TouchEvent) => {
+        if (ev.touches.length < 2) return;
+        ev.preventDefault();
+        const [a2, b2] = [ev.touches[0], ev.touches[1]];
+        const dist = Math.hypot(b2.clientX - a2.clientX, b2.clientY - a2.clientY);
+        if (startDist === 0) return;
+        const nextScale = Math.max(
+          MIN_SCALE,
+          Math.min(MAX_SCALE, startScale * (dist / startDist))
+        );
+        const clamped = clampOffset({
+          naturalW: edit.naturalWidth,
+          naturalH: edit.naturalHeight,
+          rotation: edit.rotation,
+          scale: nextScale,
+          offsetX: edit.offsetX,
+          offsetY: edit.offsetY,
+        });
+        lastNext = { ...edit, scale: nextScale, ...clamped };
+        onDragUpdate(lastNext);
+      };
+      const onEnd = () => {
+        onUpdate(lastNext);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
+        window.removeEventListener('touchcancel', onEnd);
+      };
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('touchcancel', onEnd);
+    }
+  };
+
   return (
     <div className="space-y-4 w-full max-w-4xl mx-auto p-4">
       {/* Header */}
@@ -174,7 +264,7 @@ export default function ImageEditor({
       {/* Crop frame — 1034×1379 scaled down to fit viewport */}
       <div className="flex justify-center">
         <div
-          className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing"
+          className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
           style={{
             width: FRAME_W,
             height: FRAME_H,
@@ -184,6 +274,7 @@ export default function ImageEditor({
           }}
           onMouseDown={onMouseDown}
           onWheel={onWheel}
+          onTouchStart={onTouchStart}
         >
           <img
             src={edit.src}
