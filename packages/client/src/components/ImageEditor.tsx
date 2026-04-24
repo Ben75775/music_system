@@ -264,7 +264,7 @@ export default function ImageEditor({
       {/* Instructions */}
       <p className="text-center text-sm text-gray-500">{t('image.instructions')}</p>
 
-      {/* Controls row */}
+      {/* Action buttons row */}
       <div className="flex justify-center gap-2">
         <button
           onClick={reset}
@@ -278,22 +278,6 @@ export default function ImageEditor({
         >
           {t('image.fit')}
         </button>
-        <label className="flex items-center gap-2 text-sm bg-gray-100 rounded-lg px-3 py-2">
-          <span className="text-gray-700">{t('image.rotate')}</span>
-          <input
-            type="range"
-            min={0}
-            max={360}
-            step={1}
-            value={edit.rotation}
-            onChange={onRotationChange}
-            className="w-32"
-            aria-label={t('image.rotate')}
-          />
-          <span className="font-mono text-xs text-gray-500 w-10 text-right">
-            {Math.round(edit.rotation)}°
-          </span>
-        </label>
         <button
           onClick={handleDownload}
           disabled={exporting}
@@ -301,6 +285,34 @@ export default function ImageEditor({
         >
           {exporting ? t('editor.exporting') : t('image.download')}
         </button>
+      </div>
+
+      {/* Rotation row — wide slider for per-degree precision + number input for exact entry */}
+      <div className="flex items-center gap-3 px-2">
+        <span className="text-sm text-gray-700 shrink-0">{t('image.rotate')}</span>
+        <input
+          type="range"
+          min={0}
+          max={360}
+          step={1}
+          value={edit.rotation}
+          onChange={onRotationChange}
+          className="flex-1"
+          aria-label={t('image.rotate')}
+          dir="ltr"
+        />
+        <input
+          type="number"
+          min={0}
+          max={360}
+          step={1}
+          value={Math.round(edit.rotation)}
+          onChange={onRotationChange}
+          className="w-16 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+          aria-label={t('image.rotate')}
+          dir="ltr"
+        />
+        <span className="font-mono text-xs text-gray-500 shrink-0">°</span>
       </div>
     </div>
   );
