@@ -75,7 +75,36 @@ export function useFFmpeg() {
     []
   );
 
-  return { ...state, load, exec };
+  const run = useCallback(async (args: string[]) => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) throw new Error('ffmpeg not loaded');
+    await ffmpeg.exec(args);
+  }, []);
+
+  const writeFile = useCallback(async (name: string, data: Uint8Array | File) => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) throw new Error('ffmpeg not loaded');
+    const buf = data instanceof File ? await fetchFile(data) : data;
+    await ffmpeg.writeFile(name, buf);
+  }, []);
+
+  const readFile = useCallback(async (name: string): Promise<Uint8Array> => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) throw new Error('ffmpeg not loaded');
+    return (await ffmpeg.readFile(name)) as Uint8Array;
+  }, []);
+
+  const deleteFile = useCallback(async (name: string) => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) return;
+    try {
+      await ffmpeg.deleteFile(name);
+    } catch {
+      /* ignore — deleting non-existent files is fine */
+    }
+  }, []);
+
+  return { ...state, load, exec, run, writeFile, readFile, deleteFile };
 }
 
 function getExtension(filename: string): string {
