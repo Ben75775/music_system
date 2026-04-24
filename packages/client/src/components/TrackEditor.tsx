@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Clip, TrackEffect } from 'shared/types';
+import type { Clip, TrackEffect, Project } from 'shared/types';
+import CropOverlay, { videoCropStyle } from './CropOverlay';
 import { useWaveSurfer } from '../hooks/useWaveSurfer';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { useSpacebar } from '../hooks/useSpacebar';
@@ -9,6 +10,7 @@ import ExportButton from './ExportButton';
 
 interface TrackEditorProps {
   clip: Clip;
+  project: Project;
   /** Discrete change -- pushes previous state to undo history */
   onUpdateClip: (clip: Clip) => void;
   /** Continuous drag change -- updates value without creating undo entry */
@@ -22,6 +24,7 @@ interface TrackEditorProps {
 
 export default function TrackEditor({
   clip,
+  project,
   onUpdateClip,
   onDragUpdateClip,
   onBack,
@@ -93,7 +96,7 @@ export default function TrackEditor({
       {clip.type === 'audio' ? (
         <AudioEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
       ) : (
-        <VideoEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
+        <VideoEditor clip={clip} project={project} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
       )}
     </div>
   );
@@ -218,10 +221,12 @@ function AudioEditor({
 
 function VideoEditor({
   clip,
+  project,
   onUpdateClip,
   onDragUpdateClip,
 }: {
   clip: Clip;
+  project: Project;
   onUpdateClip: (clip: Clip) => void;
   onDragUpdateClip: (clip: Clip) => void;
 }) {
@@ -270,6 +275,7 @@ function VideoEditor({
           ref={bind}
           src={clip.url}
           className="w-full max-h-[400px] mx-auto"
+          style={videoCropStyle(clip)}
         />
         {/* Black overlay for visual fade in/out */}
         <VideoFadeOverlay
@@ -298,6 +304,11 @@ function VideoEditor({
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
         <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
+        <CropOverlay
+          clip={clip}
+          project={project}
+          onCropChange={(crop) => onUpdateClip({ ...clip, crop })}
+        />
       </div>
 
       {/* Export */}

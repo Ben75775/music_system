@@ -51,6 +51,14 @@
     "portrait": "Portrait photo",
     "changeConfirm": "Changing the project format will reset all crop regions. Continue?"
   },
+  "crop": {
+    "presets": "Crop",
+    "center": "Center",
+    "left": "Left half",
+    "right": "Right half",
+    "top": "Top half",
+    "bottom": "Bottom half"
+  },
   "language": {
     "toggle": "עברית"
   }

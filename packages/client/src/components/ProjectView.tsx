@@ -137,6 +137,7 @@ export default function ProjectView({
         <section>
           <TrackEditor
             clip={selected}
+            project={project}
             onUpdateClip={updateClip}
             onDragUpdateClip={dragUpdateClip}
             onBack={onBack}
