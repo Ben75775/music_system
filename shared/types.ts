@@ -52,3 +52,22 @@ export const DEFAULT_EFFECTS: TrackEffect = {
   speed: 1,
   eqPreset: 'none',
 };
+
+export interface ImageEdit {
+  /** Object URL for the source image. */
+  src: string;
+  /** Original filename without extension (used as export filename stem). */
+  name: string;
+  /** Intrinsic width of the source image in CSS pixels. */
+  naturalWidth: number;
+  /** Intrinsic height of the source image in CSS pixels. */
+  naturalHeight: number;
+  /** User zoom multiplier on top of base cover scale. 1.0 = exact cover; min 1, max 8. */
+  scale: number;
+  /** Screen-space horizontal offset in source pixels. 0 = centered. */
+  offsetX: number;
+  /** Screen-space vertical offset in source pixels. 0 = centered. */
+  offsetY: number;
+  /** Quadrant rotation applied before scale, in degrees. */
+  rotation: 0 | 90 | 180 | 270;
+}

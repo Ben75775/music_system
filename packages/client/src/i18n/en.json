@@ -35,6 +35,9 @@
     "ready": "Ready",
     "advancedEditor": "Need more tools? →"
   },
+  "image": {
+    "unsupportedFormat": "Only PNG, JPEG, and WebP images are supported"
+  },
   "project": {
     "empty": "Project has no clips",
     "clipListPlaceholder": "Clip list (coming soon)",

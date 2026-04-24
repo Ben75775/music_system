@@ -1,16 +1,18 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Clip } from 'shared/types';
+import type { Clip, ImageEdit } from 'shared/types';
 import { DEFAULT_EFFECTS } from 'shared/types';
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
-const ACCEPTED_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
+const AV_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 interface FileInputProps {
   onFileReady: (track: Clip) => void;
+  onImageReady: (edit: ImageEdit) => void;
 }
 
-export default function FileInput({ onFileReady }: FileInputProps) {
+export default function FileInput({ onFileReady, onImageReady }: FileInputProps) {
   const { t } = useTranslation();
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,25 +23,52 @@ export default function FileInput({ onFileReady }: FileInputProps) {
     async (file: File) => {
       setError(null);
 
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        setError(t('input.invalidFile'));
-        return;
-      }
       if (file.size > MAX_FILE_SIZE) {
         setError(t('input.fileTooLarge'));
+        return;
+      }
+
+      // Image branch
+      if (file.type.startsWith('image/')) {
+        if (!IMAGE_TYPES.includes(file.type)) {
+          setError(t('image.unsupportedFormat'));
+          return;
+        }
+        setLoading(true);
+        try {
+          const url = URL.createObjectURL(file);
+          const { naturalWidth, naturalHeight } = await readImageNaturalSize(url);
+          const dot = file.name.lastIndexOf('.');
+          const name = dot > 0 ? file.name.slice(0, dot) : file.name;
+          onImageReady({
+            src: url,
+            name,
+            naturalWidth,
+            naturalHeight,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            rotation: 0,
+          });
+        } catch {
+          setError(t('input.invalidFile'));
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Audio / video branch
+      if (!AV_TYPES.includes(file.type)) {
+        setError(t('input.invalidFile'));
         return;
       }
 
       setLoading(true);
       try {
         const url = URL.createObjectURL(file);
-        const type: 'audio' | 'video' = file.type.startsWith('video/')
-          ? 'video'
-          : 'audio';
-
-        // Get duration and dimensions (for video)
+        const type: 'audio' | 'video' = file.type.startsWith('video/') ? 'video' : 'audio';
         const { duration, width, height } = await readMediaMetadata(url, type);
-
         const track: Clip = {
           id: crypto.randomUUID(),
           name: file.name,
@@ -51,7 +80,6 @@ export default function FileInput({ onFileReady }: FileInputProps) {
           effects: { ...DEFAULT_EFFECTS },
           ...(type === 'video' ? { sourceWidth: width, sourceHeight: height } : {}),
         };
-
         onFileReady(track);
       } catch {
         setError(t('input.invalidFile'));
@@ -59,7 +87,7 @@ export default function FileInput({ onFileReady }: FileInputProps) {
         setLoading(false);
       }
     },
-    [onFileReady, t]
+    [onFileReady, onImageReady, t]
   );
 
   const handleDrop = useCallback(
@@ -100,7 +128,7 @@ export default function FileInput({ onFileReady }: FileInputProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".mp3,.mp4,audio/mpeg,video/mp4"
+          accept=".mp3,.mp4,.png,.jpg,.jpeg,.webp,audio/mpeg,video/mp4,image/png,image/jpeg,image/webp"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -150,5 +178,17 @@ function readMediaMetadata(
       el.onerror = reject;
       el.src = url;
     }
+  });
+}
+
+function readImageNaturalSize(
+  url: string
+): Promise<{ naturalWidth: number; naturalHeight: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () =>
+      resolve({ naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight });
+    img.onerror = reject;
+    img.src = url;
   });
 }

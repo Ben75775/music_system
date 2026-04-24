@@ -35,6 +35,9 @@
     "ready": "מוכן",
     "advancedEditor": "צריכים עוד כלים? →"
   },
+  "image": {
+    "unsupportedFormat": "רק תמונות PNG, JPEG ו-WebP נתמכות"
+  },
   "project": {
     "empty": "אין קליפים בפרויקט",
     "clipListPlaceholder": "רשימת קליפים (בקרוב)",
