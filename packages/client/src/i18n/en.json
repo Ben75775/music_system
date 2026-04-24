@@ -43,6 +43,7 @@
     "videoOnly": "Video projects only accept MP4 files"
   },
   "aspect": {
+    "title": "Project format",
     "youtube": "YouTube / TV",
     "tiktok": "TikTok / Reels / Stories",
     "square": "Instagram post / square",

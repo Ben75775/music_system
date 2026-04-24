@@ -4,7 +4,9 @@ import type { Clip, Project } from 'shared/types';
 import TrackEditor from './TrackEditor';
 import ClipList from './ClipList';
 import AddClipForm from './AddClipForm';
+import AspectPicker from './AspectPicker';
 import { arrayMove } from '../lib/array-move';
+import { guessAspect } from '../lib/aspect';
 
 interface ProjectViewProps {
   project: Project;
@@ -50,7 +52,16 @@ export default function ProjectView({
   const addClip = useCallback(
     (clip: Clip) => {
       if (clip.type !== project.mode) return; // AddClipForm already guards, defensive.
-      onUpdateProject({ ...project, clips: [...project.clips, clip] });
+      let next: Project = { ...project, clips: [...project.clips, clip] };
+      if (
+        project.mode === 'video' &&
+        !project.aspect &&
+        clip.sourceWidth &&
+        clip.sourceHeight
+      ) {
+        next = { ...next, aspect: guessAspect(clip.sourceWidth, clip.sourceHeight) };
+      }
+      onUpdateProject(next);
       setSelectedId(clip.id);
     },
     [project, onUpdateProject]
@@ -91,6 +102,23 @@ export default function ProjectView({
     <div className="w-full max-w-6xl mx-auto space-y-4 p-4">
       {/* Master timeline placeholder (Phase 11 replaces this) */}
       <div className="h-12 bg-gray-100 rounded-lg" />
+
+      {project.mode === 'video' && (
+        <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+          <p className="text-sm font-medium text-gray-700">{t('aspect.title')}</p>
+          <AspectPicker
+            value={project.aspect}
+            locked={project.clips.length > 0 && project.aspect !== undefined}
+            onChange={(a) => onUpdateProject({ ...project, aspect: a })}
+            onRequestChangeWhileLocked={() => {
+              if (confirm(t('aspect.changeConfirm'))) {
+                const clips = project.clips.map((c) => ({ ...c, crop: undefined }));
+                onUpdateProject({ ...project, clips, aspect: undefined });
+              }
+            }}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-[280px_1fr] gap-4">
         {/* Clip list */}
