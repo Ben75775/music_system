@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale } from './image-fit';
+import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale, containScale } from './image-fit';
 
 describe('FRAME constants', () => {
   it('are 1034 x 1379', () => {
@@ -172,5 +172,24 @@ describe('initialScale', () => {
     // displayScale = min(1, 0.3447) = 0.3447.
     // initialScale = 0.3447 / 0.6895 = 0.5.
     expect(initialScale(2000, 3000, 90)).toBeCloseTo(0.5, 3);
+  });
+});
+
+describe('containScale', () => {
+  it('matches initialScale for large images (where contain < 1)', () => {
+    // 2000x3000: contain < 1, so both are equal.
+    expect(containScale(2000, 3000, 0)).toBeCloseTo(initialScale(2000, 3000, 0), 5);
+  });
+
+  it('upscales small images to fit the frame (distinct from initialScale)', () => {
+    // 500x500: contain = 2.068 > 1. initialScale caps at 1/cover.
+    // containScale = 2.068 / 2.758 = 0.7498.
+    expect(containScale(500, 500, 0)).toBeCloseTo(0.7498, 3);
+    // initialScale is strictly smaller for small images.
+    expect(containScale(500, 500, 0)).toBeGreaterThan(initialScale(500, 500, 0));
+  });
+
+  it('returns 1 when source exactly matches frame', () => {
+    expect(containScale(1034, 1379, 0)).toBe(1);
   });
 });

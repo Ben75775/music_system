@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
-import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale } from '../lib/image-fit';
+import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale, containScale } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 
 interface ImageEditorProps {
@@ -88,7 +88,12 @@ export default function ImageEditor({
   };
 
   const fit = () => {
-    onUpdate({ ...edit, scale: 1, offsetX: 0, offsetY: 0 });
+    onUpdate({
+      ...edit,
+      scale: containScale(edit.naturalWidth, edit.naturalHeight, edit.rotation),
+      offsetX: 0,
+      offsetY: 0,
+    });
   };
 
   const MIN_SCALE = 0.05;

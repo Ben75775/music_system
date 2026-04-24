@@ -28,6 +28,22 @@ export function baseCoverScale(
 }
 
 /**
+ * Fit-to-contain scale: the image is fully visible in the frame, touching
+ * one pair of frame edges and letterboxed on the other. Returned as a
+ * multiplier relative to `baseCoverScale`.
+ */
+export function containScale(
+  naturalW: number,
+  naturalH: number,
+  rotation: Rotation
+): number {
+  const cover = baseCoverScale(naturalW, naturalH, rotation);
+  const { effW, effH } = effectiveDims(naturalW, naturalH, rotation);
+  const contain = Math.min(FRAME_W / effW, FRAME_H / effH);
+  return contain / cover;
+}
+
+/**
  * Initial scale on upload: whole image visible in the frame. For images larger
  * than the frame this is fit-to-contain (letterboxed). For images smaller than
  * the frame this is natural pixel size (no upscaling). Returned as a multiplier
