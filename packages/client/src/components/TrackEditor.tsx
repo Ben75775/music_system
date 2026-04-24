@@ -8,11 +8,11 @@ import Controls from './Controls';
 import ExportButton from './ExportButton';
 
 interface TrackEditorProps {
-  track: Clip;
+  clip: Clip;
   /** Discrete change -- pushes previous state to undo history */
-  onUpdateTrack: (track: Clip) => void;
+  onUpdateClip: (clip: Clip) => void;
   /** Continuous drag change -- updates value without creating undo entry */
-  onDragUpdateTrack: (track: Clip) => void;
+  onDragUpdateClip: (clip: Clip) => void;
   onBack: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -21,9 +21,9 @@ interface TrackEditorProps {
 }
 
 export default function TrackEditor({
-  track,
-  onUpdateTrack,
-  onDragUpdateTrack,
+  clip,
+  onUpdateClip,
+  onDragUpdateClip,
   onBack,
   onUndo,
   onRedo,
@@ -85,15 +85,15 @@ export default function TrackEditor({
           </button>
         </div>
         <h2 className="text-lg font-semibold text-gray-700 truncate max-w-md">
-          {track.name}
+          {clip.name}
         </h2>
         <div className="w-20" />
       </div>
 
-      {track.type === 'audio' ? (
-        <AudioEditor track={track} onUpdateTrack={onUpdateTrack} onDragUpdateTrack={onDragUpdateTrack} />
+      {clip.type === 'audio' ? (
+        <AudioEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
       ) : (
-        <VideoEditor track={track} onUpdateTrack={onUpdateTrack} onDragUpdateTrack={onDragUpdateTrack} />
+        <VideoEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} />
       )}
     </div>
   );
@@ -102,13 +102,13 @@ export default function TrackEditor({
 // ─── Audio Editor ────────────────────────────────────────────────
 
 function AudioEditor({
-  track,
-  onUpdateTrack,
-  onDragUpdateTrack,
+  clip,
+  onUpdateClip,
+  onDragUpdateClip,
 }: {
-  track: Clip;
-  onUpdateTrack: (track: Clip) => void;
-  onDragUpdateTrack: (track: Clip) => void;
+  clip: Clip;
+  onUpdateClip: (clip: Clip) => void;
+  onDragUpdateClip: (clip: Clip) => void;
 }) {
   const { t } = useTranslation();
   const waveformRef = useRef<HTMLDivElement>(null);
@@ -119,44 +119,44 @@ function AudioEditor({
   }, []);
 
   const { isPlaying, isReady, currentTime, togglePlayPause, seekTo } =
-    useWaveSurfer({ track, container });
+    useWaveSurfer({ track: clip, container });
 
   useSpacebar(togglePlayPause);
 
   // Discrete effect changes (EQ dropdown, editable input commit) -> creates undo entry
   const updateEffects = useCallback(
-    (effects: TrackEffect) => onUpdateTrack({ ...track, effects }),
-    [track, onUpdateTrack]
+    (effects: TrackEffect) => onUpdateClip({ ...clip, effects }),
+    [clip, onUpdateClip]
   );
 
   // Slider drag effect changes -> no undo entry until release
   const dragUpdateEffects = useCallback(
-    (effects: TrackEffect) => onDragUpdateTrack({ ...track, effects }),
-    [track, onDragUpdateTrack]
+    (effects: TrackEffect) => onDragUpdateClip({ ...clip, effects }),
+    [clip, onDragUpdateClip]
   );
 
   // Trim drag -> no undo entry (TimelineBar handles set/replace via onTrimDragStart/onTrimDrag)
   const handleTrimChange = useCallback(
     (start: number, end: number) => {
-      onDragUpdateTrack({ ...track, trim: { start, end } });
+      onDragUpdateClip({ ...clip, trim: { start, end } });
     },
-    [track, onDragUpdateTrack]
+    [clip, onDragUpdateClip]
   );
 
   const handleTrimCommit = useCallback(
     (start: number, end: number) => {
-      onUpdateTrack({ ...track, trim: { start, end } });
+      onUpdateClip({ ...clip, trim: { start, end } });
     },
-    [track, onUpdateTrack]
+    [clip, onUpdateClip]
   );
 
   const handleSeek = useCallback(
     (time: number) => {
       // Constrain to trim region
-      const clamped = Math.max(track.trim.start, Math.min(track.trim.end, time));
+      const clamped = Math.max(clip.trim.start, Math.min(clip.trim.end, time));
       seekTo(clamped);
     },
-    [track.trim.start, track.trim.end, seekTo]
+    [clip.trim.start, clip.trim.end, seekTo]
   );
 
   return (
@@ -166,17 +166,17 @@ function AudioEditor({
         <div className="relative" dir="ltr">
           <div ref={waveformRef} className="w-full" />
           {/* Gray out before trim start */}
-          {isReady && track.trim.start > 0 && (
+          {isReady && clip.trim.start > 0 && (
             <div
               className="absolute top-0 bottom-0 left-0 bg-gray-100/90 pointer-events-none z-10"
-              style={{ width: `${(track.trim.start / track.duration) * 100}%` }}
+              style={{ width: `${(clip.trim.start / clip.duration) * 100}%` }}
             />
           )}
           {/* Gray out after trim end */}
-          {isReady && track.trim.end < track.duration && (
+          {isReady && clip.trim.end < clip.duration && (
             <div
               className="absolute top-0 bottom-0 right-0 bg-gray-100/90 pointer-events-none z-10"
-              style={{ width: `${((track.duration - track.trim.end) / track.duration) * 100}%` }}
+              style={{ width: `${((clip.duration - clip.trim.end) / clip.duration) * 100}%` }}
             />
           )}
         </div>
@@ -190,9 +190,9 @@ function AudioEditor({
       {/* Timeline with trim handles + playback */}
       <TimelineBar
         currentTime={currentTime}
-        trimStart={track.trim.start}
-        trimEnd={track.trim.end}
-        duration={track.duration}
+        trimStart={clip.trim.start}
+        trimEnd={clip.trim.end}
+        duration={clip.duration}
         isPlaying={isPlaying}
         isReady={isReady}
         onSeek={handleSeek}
@@ -203,12 +203,12 @@ function AudioEditor({
 
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <Controls effects={track.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
+        <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
       </div>
 
       {/* Export */}
       <div className="flex justify-center pt-4">
-        <ExportButton track={track} />
+        <ExportButton track={clip} />
       </div>
     </>
   );
@@ -217,49 +217,49 @@ function AudioEditor({
 // ─── Video Editor ────────────────────────────────────────────────
 
 function VideoEditor({
-  track,
-  onUpdateTrack,
-  onDragUpdateTrack,
+  clip,
+  onUpdateClip,
+  onDragUpdateClip,
 }: {
-  track: Clip;
-  onUpdateTrack: (track: Clip) => void;
-  onDragUpdateTrack: (track: Clip) => void;
+  clip: Clip;
+  onUpdateClip: (clip: Clip) => void;
+  onDragUpdateClip: (clip: Clip) => void;
 }) {
   const { bind, isPlaying, isReady, currentTime, togglePlayPause, seekTo } =
-    useVideoPlayer(track);
+    useVideoPlayer(clip);
 
   useSpacebar(togglePlayPause);
 
   const updateEffects = useCallback(
-    (effects: TrackEffect) => onUpdateTrack({ ...track, effects }),
-    [track, onUpdateTrack]
+    (effects: TrackEffect) => onUpdateClip({ ...clip, effects }),
+    [clip, onUpdateClip]
   );
 
   const dragUpdateEffects = useCallback(
-    (effects: TrackEffect) => onDragUpdateTrack({ ...track, effects }),
-    [track, onDragUpdateTrack]
+    (effects: TrackEffect) => onDragUpdateClip({ ...clip, effects }),
+    [clip, onDragUpdateClip]
   );
 
   const handleTrimChange = useCallback(
     (start: number, end: number) => {
-      onDragUpdateTrack({ ...track, trim: { start, end } });
+      onDragUpdateClip({ ...clip, trim: { start, end } });
     },
-    [track, onDragUpdateTrack]
+    [clip, onDragUpdateClip]
   );
 
   const handleTrimCommit = useCallback(
     (start: number, end: number) => {
-      onUpdateTrack({ ...track, trim: { start, end } });
+      onUpdateClip({ ...clip, trim: { start, end } });
     },
-    [track, onUpdateTrack]
+    [clip, onUpdateClip]
   );
 
   const handleSeek = useCallback(
     (time: number) => {
-      const clamped = Math.max(track.trim.start, Math.min(track.trim.end, time));
+      const clamped = Math.max(clip.trim.start, Math.min(clip.trim.end, time));
       seekTo(clamped);
     },
-    [track.trim.start, track.trim.end, seekTo]
+    [clip.trim.start, clip.trim.end, seekTo]
   );
 
   return (
@@ -268,25 +268,25 @@ function VideoEditor({
       <div className="bg-black rounded-xl overflow-hidden shadow-sm relative">
         <video
           ref={bind}
-          src={track.url}
+          src={clip.url}
           className="w-full max-h-[400px] mx-auto"
         />
         {/* Black overlay for visual fade in/out */}
         <VideoFadeOverlay
           currentTime={currentTime}
-          trimStart={track.trim.start}
-          trimEnd={track.trim.end}
-          fadeIn={track.effects.fadeIn}
-          fadeOut={track.effects.fadeOut}
+          trimStart={clip.trim.start}
+          trimEnd={clip.trim.end}
+          fadeIn={clip.effects.fadeIn}
+          fadeOut={clip.effects.fadeOut}
         />
       </div>
 
       {/* Timeline with trim handles + playback */}
       <TimelineBar
         currentTime={currentTime}
-        trimStart={track.trim.start}
-        trimEnd={track.trim.end}
-        duration={track.duration}
+        trimStart={clip.trim.start}
+        trimEnd={clip.trim.end}
+        duration={clip.duration}
         isPlaying={isPlaying}
         isReady={isReady}
         onSeek={handleSeek}
@@ -297,12 +297,12 @@ function VideoEditor({
 
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <Controls effects={track.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
+        <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
       </div>
 
       {/* Export */}
       <div className="flex justify-center pt-4">
-        <ExportButton track={track} />
+        <ExportButton track={clip} />
       </div>
     </>
   );
