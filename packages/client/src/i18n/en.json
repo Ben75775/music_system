@@ -42,6 +42,14 @@
     "audioOnly": "Audio projects only accept MP3 files",
     "videoOnly": "Video projects only accept MP4 files"
   },
+  "aspect": {
+    "youtube": "YouTube / TV",
+    "tiktok": "TikTok / Reels / Stories",
+    "square": "Instagram post / square",
+    "classic": "Classic / old TV",
+    "portrait": "Portrait photo",
+    "changeConfirm": "Changing the project format will reset all crop regions. Continue?"
+  },
   "language": {
     "toggle": "עברית"
   }
