@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, TrackEffect, Project } from 'shared/types';
 import CropOverlay, { videoCropStyle } from './CropOverlay';
+import CropRectangle from './CropRectangle';
 import { useWaveSurfer } from '../hooks/useWaveSurfer';
 import { useVideoPlayer } from '../hooks/useVideoPlayer';
 import { useSpacebar } from '../hooks/useSpacebar';
@@ -284,6 +285,12 @@ function VideoEditor({
           trimEnd={clip.trim.end}
           fadeIn={clip.effects.fadeIn}
           fadeOut={clip.effects.fadeOut}
+        />
+        <CropRectangle
+          clip={clip}
+          project={project}
+          onCropChange={(crop) => onDragUpdateClip({ ...clip, crop })}
+          onCropCommit={(crop) => onUpdateClip({ ...clip, crop })}
         />
       </div>
 
