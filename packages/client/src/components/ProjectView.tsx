@@ -2,6 +2,9 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, Project } from 'shared/types';
 import TrackEditor from './TrackEditor';
+import ClipList from './ClipList';
+import AddClipForm from './AddClipForm';
+import { arrayMove } from '../lib/array-move';
 
 interface ProjectViewProps {
   project: Project;
@@ -25,7 +28,7 @@ export default function ProjectView({
   canRedo,
 }: ProjectViewProps) {
   const { t } = useTranslation();
-  const [selectedId, _setSelectedId] = useState<string>(project.clips[0]?.id ?? '');
+  const [selectedId, setSelectedId] = useState<string>(project.clips[0]?.id ?? '');
   const selected = project.clips.find((c) => c.id === selectedId) ?? project.clips[0];
 
   const updateClip = useCallback(
@@ -44,6 +47,40 @@ export default function ProjectView({
     [project, onDragUpdateProject]
   );
 
+  const addClip = useCallback(
+    (clip: Clip) => {
+      if (clip.type !== project.mode) return; // AddClipForm already guards, defensive.
+      onUpdateProject({ ...project, clips: [...project.clips, clip] });
+      setSelectedId(clip.id);
+    },
+    [project, onUpdateProject]
+  );
+
+  const removeClip = useCallback(
+    (id: string) => {
+      const idx = project.clips.findIndex((c) => c.id === id);
+      if (idx < 0) return;
+      const nextClips = project.clips.filter((c) => c.id !== id);
+      onUpdateProject({ ...project, clips: nextClips });
+      if (nextClips.length === 0) {
+        onBack();
+        return;
+      }
+      if (selectedId === id) {
+        const fallback = nextClips[Math.max(0, idx - 1)];
+        setSelectedId(fallback?.id ?? '');
+      }
+    },
+    [project, onUpdateProject, selectedId, onBack]
+  );
+
+  const reorderClips = useCallback(
+    (from: number, to: number) => {
+      onUpdateProject({ ...project, clips: arrayMove(project.clips, from, to) });
+    },
+    [project, onUpdateProject]
+  );
+
   if (!selected) {
     return (
       <div className="p-8 text-center text-gray-500">{t('project.empty')}</div>
@@ -56,9 +93,16 @@ export default function ProjectView({
       <div className="h-12 bg-gray-100 rounded-lg" />
 
       <div className="grid grid-cols-[280px_1fr] gap-4">
-        {/* Clip list (Phase 7 replaces this placeholder) */}
-        <aside className="bg-white border border-gray-200 rounded-xl p-3">
-          <p className="text-sm text-gray-500">{t('project.clipListPlaceholder')}</p>
+        {/* Clip list */}
+        <aside className="bg-white border border-gray-200 rounded-xl p-3 space-y-3">
+          <AddClipForm mode={project.mode} onClipReady={addClip} />
+          <ClipList
+            clips={project.clips}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onRemove={removeClip}
+            onReorder={reorderClips}
+          />
         </aside>
 
         {/* Per-clip editor */}
