@@ -34,6 +34,10 @@
     "loadingFFmpeg": "טוען מנוע עריכה...",
     "ready": "מוכן"
   },
+  "project": {
+    "empty": "אין קליפים בפרויקט",
+    "clipListPlaceholder": "רשימת קליפים (בקרוב)"
+  },
   "language": {
     "toggle": "English"
   }

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import FileInput from './components/FileInput';
-import TrackEditor from './components/TrackEditor';
+import ProjectView from './components/ProjectView';
 import { useHistory } from './hooks/useHistory';
 import type { Clip, Project } from 'shared/types';
 
@@ -27,37 +27,19 @@ export default function App() {
     history.set(null);
   }, [history]);
 
-  // For Phase 5 we still render the single-clip editor on the project's first clip.
-  // Phase 6 replaces this branch with ProjectView.
-  const activeClip = project?.clips[0] ?? null;
-  const updateActiveClip = useCallback(
-    (clip: Clip) => {
-      if (!project) return;
-      history.set({ ...project, clips: [clip, ...project.clips.slice(1)] });
-    },
-    [history, project]
-  );
-  const dragUpdateActiveClip = useCallback(
-    (clip: Clip) => {
-      if (!project) return;
-      history.replace({ ...project, clips: [clip, ...project.clips.slice(1)] });
-    },
-    [history, project]
-  );
-
   return (
     <Layout>
-      {!project || !activeClip ? (
+      {!project ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
           <h1 className="text-4xl font-bold text-primary-700">{t('app.title')}</h1>
           <p className="text-lg text-gray-500">{t('app.subtitle')}</p>
           <FileInput onFileReady={handleFileReady} />
         </div>
       ) : (
-        <TrackEditor
-          track={activeClip}
-          onUpdateTrack={updateActiveClip}
-          onDragUpdateTrack={dragUpdateActiveClip}
+        <ProjectView
+          project={project}
+          onUpdateProject={history.set}
+          onDragUpdateProject={history.replace}
           onBack={handleBack}
           onUndo={history.undo}
           onRedo={history.redo}
