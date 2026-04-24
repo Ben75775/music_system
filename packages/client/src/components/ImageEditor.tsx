@@ -19,6 +19,9 @@ interface ImageEditorProps {
 
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 16;
+/** Visual scale factor for the preview. Output is always 1034×1379;
+ *  this only shrinks the on-screen representation so the frame fits. */
+const DISPLAY_SCALE = 0.5;
 
 export default function ImageEditor({
   edit,
@@ -128,13 +131,13 @@ export default function ImageEditor({
     const startOffsetY = edit.offsetY;
 
     const onMove = (ev: MouseEvent) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      const dx = (ev.clientX - startX) / DISPLAY_SCALE;
+      const dy = (ev.clientY - startY) / DISPLAY_SCALE;
       onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
     };
     const onUp = (ev: MouseEvent) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      const dx = (ev.clientX - startX) / DISPLAY_SCALE;
+      const dy = (ev.clientY - startY) / DISPLAY_SCALE;
       onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -157,14 +160,14 @@ export default function ImageEditor({
       const onMove = (ev: TouchEvent) => {
         if (ev.touches.length !== 1) return;
         ev.preventDefault();
-        const dx = ev.touches[0].clientX - startX;
-        const dy = ev.touches[0].clientY - startY;
+        const dx = (ev.touches[0].clientX - startX) / DISPLAY_SCALE;
+        const dy = (ev.touches[0].clientY - startY) / DISPLAY_SCALE;
         onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       };
       const onEnd = (ev: TouchEvent) => {
         const last = ev.changedTouches[0];
-        const dx = last.clientX - startX;
-        const dy = last.clientY - startY;
+        const dx = (last.clientX - startX) / DISPLAY_SCALE;
+        const dy = (last.clientY - startY) / DISPLAY_SCALE;
         onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
@@ -239,23 +242,21 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — WYSIWYG. The crop frame is rendered at exactly
-          1034×1379 CSS pixels and the image transform matches the export
-          canvas. What you see inside the white rectangle is what you download.
-          Some padding around the frame lets you see what falls outside. The
-          page scrolls if this exceeds the browser window. */}
+      {/* Editor viewport — smaller on-screen preview of the 1034×1379 crop.
+          Proportions are 1:1 with the output; only visual size shrinks
+          by DISPLAY_SCALE. Mouse/touch drag deltas compensate. */}
       <div className="flex justify-center">
         <div
           ref={viewportRef}
-          className="relative overflow-hidden bg-gray-900 shadow-lg cursor-grab active:cursor-grabbing touch-none"
+          className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none"
           style={{
-            width: FRAME_W * 1.4,
-            height: FRAME_H * 1.2,
+            width: FRAME_W * 1.4 * DISPLAY_SCALE,
+            height: FRAME_H * 1.2 * DISPLAY_SCALE,
           }}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
         >
-          {/* Image — source-pixel coords, exactly matching export math. */}
+          {/* Image — the same transform the export canvas uses, scaled for display. */}
           <img
             src={edit.src}
             alt=""
@@ -264,19 +265,19 @@ export default function ImageEditor({
             style={{
               width: edit.naturalWidth,
               height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
+              transform: `translate(-50%, -50%) translate(${edit.offsetX * DISPLAY_SCALE}px, ${edit.offsetY * DISPLAY_SCALE}px) rotate(${edit.rotation}deg) scale(${edit.scale * DISPLAY_SCALE})`,
               transformOrigin: 'center',
             }}
           />
-          {/* Crop frame indicator — 1034×1379 exact. */}
+          {/* Crop-area indicator — dims what's outside the 1034×1379 region.
+              No border, no background; just the dim veil around the crop. */}
           <div
             style={{
               position: 'absolute',
-              width: FRAME_W,
-              height: FRAME_H,
-              left: `calc(50% - ${FRAME_W / 2}px)`,
-              top: `calc(50% - ${FRAME_H / 2}px)`,
-              border: '2px solid white',
+              width: FRAME_W * DISPLAY_SCALE,
+              height: FRAME_H * DISPLAY_SCALE,
+              left: `calc(50% - ${(FRAME_W * DISPLAY_SCALE) / 2}px)`,
+              top: `calc(50% - ${(FRAME_H * DISPLAY_SCALE) / 2}px)`,
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
             }}
