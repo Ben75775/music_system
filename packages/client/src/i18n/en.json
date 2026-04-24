@@ -42,7 +42,8 @@
     "removeClip": "Remove clip",
     "audioOnly": "Audio projects only accept MP3 files",
     "videoOnly": "Video projects only accept MP4 files",
-    "discardConfirm": "Discard this project and start over?"
+    "discardConfirm": "Discard this project and start over?",
+    "sizeWarning": "This project is large. Export may be slow or may run out of memory."
   },
   "aspect": {
     "title": "Project format",

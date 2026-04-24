@@ -38,6 +38,8 @@ export default function ProjectView({
   const selected = project.clips.find((c) => c.id === selectedId) ?? project.clips[0];
 
   const engine = usePlaybackEngine(project);
+  const totalSize = project.clips.reduce((s, c) => s + (c.file?.size ?? 0), 0);
+  const WARN_SIZE = 500 * 1024 * 1024;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -220,6 +222,10 @@ export default function ProjectView({
           />
         </section>
       </div>
+
+      {totalSize > WARN_SIZE && (
+        <p className="text-sm text-amber-600 text-center">{t('project.sizeWarning')}</p>
+      )}
 
       <div className="flex flex-wrap justify-center items-center gap-3 pt-4">
         <ExportButton project={project} />
