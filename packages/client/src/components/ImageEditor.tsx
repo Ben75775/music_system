@@ -98,31 +98,13 @@ export default function ImageEditor({
     editRef.current = edit;
   }, [edit]);
 
-  // Track browser window size so we can recompute the display scale when the
-  // user resizes their window.
-  const [winSize, setWinSize] = useState({
-    w: typeof window !== 'undefined' ? window.innerWidth : 1920,
-    h: typeof window !== 'undefined' ? window.innerHeight : 1080,
-  });
-  useEffect(() => {
-    const onResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // Dynamic display scale: the stage intrinsic size is max(frame, image) —
-  // whatever is bigger in each axis. displayScale is bounded ONLY by browser
-  // width (not height) so images that fit horizontally render at natural
-  // pixel size (e.g. 1280×720 on a 1920-wide browser → displayScale = 1).
-  // If the stage is taller than the browser window, the page scrolls — that's
-  // an acceptable trade-off for avoiding forced shrink on small images.
+  // Stage = max(frame, image) in each axis. Image always renders at natural
+  // pixel size (no displayScale shrink). If the stage exceeds the browser
+  // window, the page scrolls — the user can scroll / pan / zoom to see
+  // what they want. This guarantees the preview is 1:1 with the export for
+  // every resolution, no forced browser-fit shrink.
   const stageW = Math.max(FRAME_W, edit.naturalWidth);
   const stageH = Math.max(FRAME_H, edit.naturalHeight);
-  const displayScale = Math.min(1, (winSize.w * 0.9) / stageW);
-  const displayScaleRef = useRef(displayScale);
-  useEffect(() => {
-    displayScaleRef.current = displayScale;
-  }, [displayScale]);
 
   // Wheel zoom — attach a NON-passive native listener so we can call preventDefault
   // (React synthetic onWheel is passive by default, so e.preventDefault() there
@@ -154,15 +136,13 @@ export default function ImageEditor({
     const startOffsetY = edit.offsetY;
 
     const onMove = (ev: MouseEvent) => {
-      const s = displayScaleRef.current || 1;
-      const dx = (ev.clientX - startX) / s;
-      const dy = (ev.clientY - startY) / s;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
       onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
     };
     const onUp = (ev: MouseEvent) => {
-      const s = displayScaleRef.current || 1;
-      const dx = (ev.clientX - startX) / s;
-      const dy = (ev.clientY - startY) / s;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
       onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -185,16 +165,14 @@ export default function ImageEditor({
       const onMove = (ev: TouchEvent) => {
         if (ev.touches.length !== 1) return;
         ev.preventDefault();
-        const s = displayScaleRef.current || 1;
-        const dx = (ev.touches[0].clientX - startX) / s;
-        const dy = (ev.touches[0].clientY - startY) / s;
+        const dx = ev.touches[0].clientX - startX;
+        const dy = ev.touches[0].clientY - startY;
         onDragUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
       };
       const onEnd = (ev: TouchEvent) => {
         const last = ev.changedTouches[0];
-        const s = displayScaleRef.current || 1;
-        const dx = (last.clientX - startX) / s;
-        const dy = (last.clientY - startY) / s;
+        const dx = last.clientX - startX;
+        const dy = last.clientY - startY;
         onUpdate({ ...edit, offsetX: startOffsetX + dx, offsetY: startOffsetY + dy });
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
@@ -269,22 +247,22 @@ export default function ImageEditor({
         <div className="w-20" />
       </div>
 
-      {/* Editor viewport — NOT constrained by max-w-4xl so it can be as wide
-          as the image requires. flex-shrink:0 prevents the flex parent from
-          squeezing it. displayScale already guarantees stage*displayScale
-          fits within 85vw × 75vh, so overflow beyond the browser is rare. */}
-      <div className="flex justify-center w-full">
+      {/* Editor viewport — 1:1 with source coords. Image always at natural
+          pixel size, no displayScale. If the stage is wider/taller than the
+          browser, the page scrolls. shrink-0 prevents any flex parent from
+          squeezing the viewport. */}
+      <div className="flex justify-center w-full overflow-auto">
         <div
           ref={viewportRef}
           className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none shrink-0"
           style={{
-            width: stageW * displayScale,
-            height: stageH * displayScale,
+            width: stageW,
+            height: stageH,
           }}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
         >
-          {/* Image — source-pixel coords scaled by displayScale. */}
+          {/* Image — natural pixel size, same transform as the export canvas. */}
           <img
             src={edit.src}
             alt=""
@@ -293,7 +271,7 @@ export default function ImageEditor({
             style={{
               width: edit.naturalWidth,
               height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX * displayScale}px, ${edit.offsetY * displayScale}px) rotate(${edit.rotation}deg) scale(${edit.scale * displayScale})`,
+              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
               transformOrigin: 'center',
             }}
           />
@@ -301,10 +279,10 @@ export default function ImageEditor({
           <div
             style={{
               position: 'absolute',
-              width: FRAME_W * displayScale,
-              height: FRAME_H * displayScale,
-              left: `calc(50% - ${(FRAME_W * displayScale) / 2}px)`,
-              top: `calc(50% - ${(FRAME_H * displayScale) / 2}px)`,
+              width: FRAME_W,
+              height: FRAME_H,
+              left: `calc(50% - ${FRAME_W / 2}px)`,
+              top: `calc(50% - ${FRAME_H / 2}px)`,
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
             }}
