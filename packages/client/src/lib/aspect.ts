@@ -22,11 +22,23 @@ export function guessAspect(w: number, h: number): Aspect {
 }
 
 export function aspectRatio(a: Aspect): number {
+  if (a === 'original') {
+    throw new Error("aspectRatio('original') requires explicit source dims");
+  }
   const [num, den] = a.split(':').map(Number);
   return num / den;
 }
 
-export function outputDimensions(a: Aspect): { w: number; h: number } {
+export function outputDimensions(
+  a: Aspect,
+  sourceDims?: { w: number; h: number }
+): { w: number; h: number } {
+  if (a === 'original') {
+    if (!sourceDims) {
+      throw new Error("outputDimensions('original') requires sourceDims");
+    }
+    return sourceDims;
+  }
   // Fixed baseline: 1080 on the short edge.
   switch (a) {
     case '16:9': return { w: 1920, h: 1080 };

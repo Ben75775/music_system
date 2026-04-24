@@ -5,6 +5,9 @@ export function defaultCropForAspect(
   source: { w: number; h: number },
   aspect: Aspect
 ): CropRegion {
+  if (aspect === 'original') {
+    return { x: 0, y: 0, width: 1, height: 1 };
+  }
   const srcRatio = source.w / source.h;
   const projRatio = aspectRatio(aspect);
 

@@ -15,7 +15,7 @@ export default function CropRectangle({
   onCropCommit,
 }: CropRectangleProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  if (project.mode !== 'video' || !project.aspect || !clip.crop) return null;
+  if (project.mode !== 'video' || !project.aspect || project.aspect === 'original' || !clip.crop) return null;
 
   const crop = clip.crop;
 

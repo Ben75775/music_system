@@ -27,6 +27,15 @@ export async function exportProject(
   const mime = project.mode === 'audio' ? 'audio/mpeg' : 'video/mp4';
   const normalized: string[] = [];
 
+  let outDims: { w: number; h: number } | undefined;
+  if (project.mode === 'video' && project.aspect === 'original') {
+    const first = project.clips[0];
+    if (!first.sourceWidth || !first.sourceHeight) {
+      throw new Error('first clip missing source dimensions (cannot compute original output)');
+    }
+    outDims = { w: first.sourceWidth, h: first.sourceHeight };
+  }
+
   const steps = project.clips.length + 1;
   const bump = (i: number) => onProgress?.(Math.round((i / steps) * 100));
 
@@ -39,7 +48,7 @@ export async function exportProject(
 
     try {
       await deps.writeFile(inputName, clip.file);
-      const args = ['-i', inputName, ...buildNormalizeArgs(clip, project), outName];
+      const args = ['-i', inputName, ...buildNormalizeArgs(clip, project, outDims), outName];
       await deps.run(args);
     } catch (e) {
       throw new Error(`clip_${i}_normalize_failed: ${(e as Error).message}`);

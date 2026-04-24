@@ -88,7 +88,11 @@ export function getOutputName(track: Clip): string {
  * Build args for the per-clip normalize pass. Input is the clip's source file;
  * output is a clip_N.<ext> file that matches the project's common format.
  */
-export function buildNormalizeArgs(clip: Clip, project: Project): string[] {
+export function buildNormalizeArgs(
+  clip: Clip,
+  project: Project,
+  outDims?: { w: number; h: number }
+): string[] {
   const args: string[] = [];
 
   if (clip.trim.start > 0) args.push('-ss', clip.trim.start.toFixed(3));
@@ -124,8 +128,14 @@ export function buildNormalizeArgs(clip: Clip, project: Project): string[] {
 
   if (project.mode === 'video') {
     if (!project.aspect) throw new Error('video project must have aspect set');
-    const { w, h } = outputDimensions(project.aspect);
-    if (clip.crop && clip.sourceWidth && clip.sourceHeight) {
+    const dims = outDims ?? outputDimensions(project.aspect);
+    const { w, h } = dims;
+    if (
+      project.aspect !== 'original' &&
+      clip.crop &&
+      clip.sourceWidth &&
+      clip.sourceHeight
+    ) {
       const cx = Math.round(clip.crop.x * clip.sourceWidth);
       const cy = Math.round(clip.crop.y * clip.sourceHeight);
       const cw = Math.round(clip.crop.width * clip.sourceWidth);

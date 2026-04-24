@@ -26,6 +26,12 @@ describe('defaultCropForAspect', () => {
   });
 });
 
+describe('defaultCropForAspect (original)', () => {
+  it('returns full frame for original aspect', () => {
+    expect(defaultCropForAspect({ w: 1600, h: 900 }, 'original')).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+  });
+});
+
 describe('cropToCss', () => {
   it('full frame = no clipping', () => {
     expect(cropToCss({ x: 0, y: 0, width: 1, height: 1 })).toEqual({

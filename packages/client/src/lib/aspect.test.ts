@@ -18,3 +18,18 @@ describe('outputDimensions', () => {
   it('16:9 → 1920x1080', () => expect(outputDimensions('16:9')).toEqual({ w: 1920, h: 1080 }));
   it('9:16 → 1080x1920', () => expect(outputDimensions('9:16')).toEqual({ w: 1080, h: 1920 }));
 });
+
+describe('aspectRatio (original)', () => {
+  it("throws for 'original'", () => {
+    expect(() => aspectRatio('original')).toThrow();
+  });
+});
+
+describe('outputDimensions (original)', () => {
+  it("uses sourceDims for 'original'", () => {
+    expect(outputDimensions('original', { w: 1600, h: 900 })).toEqual({ w: 1600, h: 900 });
+  });
+  it("throws for 'original' without sourceDims", () => {
+    expect(() => outputDimensions('original')).toThrow();
+  });
+});

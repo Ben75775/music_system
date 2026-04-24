@@ -1,5 +1,5 @@
 export type ProjectMode = 'audio' | 'video';
-export type Aspect = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
+export type Aspect = '16:9' | '9:16' | '1:1' | '4:3' | '3:4' | 'original';
 
 export type EQPreset = 'none' | 'bass-boost' | 'vocal-clarity' | 'treble-boost';
 

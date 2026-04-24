@@ -17,6 +17,7 @@ const OPTIONS: Array<{
   { aspect: '1:1', nameKey: 'aspect.square', w: 26, h: 26 },
   { aspect: '4:3', nameKey: 'aspect.classic', w: 32, h: 24 },
   { aspect: '3:4', nameKey: 'aspect.portrait', w: 24, h: 32 },
+  { aspect: 'original', nameKey: 'aspect.original', w: 28, h: 20 },
 ];
 
 export default function AspectPicker({ value, onChange }: AspectPickerProps) {
@@ -45,7 +46,9 @@ export default function AspectPicker({ value, onChange }: AspectPickerProps) {
             />
             <span className="flex flex-col items-start">
               <span className="font-medium leading-none">{t(nameKey)}</span>
-              <span className="text-xs text-gray-400 leading-none mt-1">{aspect}</span>
+              <span className="text-xs text-gray-400 leading-none mt-1">
+                {aspect === 'original' ? '—' : aspect}
+              </span>
             </span>
           </button>
         );

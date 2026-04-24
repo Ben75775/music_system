@@ -55,6 +55,23 @@ describe('buildNormalizeArgs (video)', () => {
   });
 });
 
+describe('buildNormalizeArgs (original)', () => {
+  it('uses provided outDims when aspect is original', () => {
+    const project: Project = { id: 'p', mode: 'video', aspect: 'original', clips: [] };
+    const clip: Clip = {
+      ...audioClip(),
+      type: 'video',
+      sourceWidth: 1280,
+      sourceHeight: 720,
+    };
+    const args = buildNormalizeArgs(clip, project, { w: 1280, h: 720 });
+    const vf = args[args.indexOf('-vf') + 1];
+    expect(vf).toContain('scale=1280:720');
+    // No crop filter for original
+    expect(vf).not.toContain('crop=');
+  });
+});
+
 describe('buildConcatArgs', () => {
   it('produces concat demuxer args', () => {
     const args = buildConcatArgs(['clip_0.mp3', 'clip_1.mp3'], 'output.mp3');

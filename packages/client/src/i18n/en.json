@@ -59,7 +59,8 @@
     "tiktok": "TikTok / Reels / Stories",
     "square": "Instagram post / square",
     "classic": "Classic / old TV",
-    "portrait": "Portrait photo"
+    "portrait": "Portrait photo",
+    "original": "Original / source"
   },
   "crop": {
     "presets": "Crop",
