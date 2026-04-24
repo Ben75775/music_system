@@ -175,6 +175,20 @@ describe('initialScale', () => {
   });
 });
 
+describe('baseCoverScale (arbitrary angles)', () => {
+  it('uses axis-aligned bounding box at 45°', () => {
+    // Square 1000x1000 at 45° has bounding box 1000*√2 × 1000*√2 ≈ 1414×1414.
+    // cover = max(1034/1414, 1379/1414) = 1379/1414 ≈ 0.9752.
+    expect(baseCoverScale(1000, 1000, 45)).toBeCloseTo(1379 / (1000 * Math.SQRT2), 3);
+  });
+  it('is a continuous function of rotation', () => {
+    // Small perturbation away from 0° shouldn't cause a discontinuity.
+    const a = baseCoverScale(2000, 1000, 0);
+    const b = baseCoverScale(2000, 1000, 1);
+    expect(Math.abs(a - b)).toBeLessThan(0.05);
+  });
+});
+
 describe('containScale', () => {
   it('matches initialScale for large images (where contain < 1)', () => {
     // 2000x3000: contain < 1, so both are equal.

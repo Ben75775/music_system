@@ -1,17 +1,22 @@
 export const FRAME_W = 1034;
 export const FRAME_H = 1379;
 
-export type Rotation = 0 | 90 | 180 | 270;
+/** Rotation in degrees. Any value 0-360 is valid. */
+export type Rotation = number;
 
 function effectiveDims(
   naturalW: number,
   naturalH: number,
   rotation: Rotation
 ): { effW: number; effH: number } {
-  if (rotation === 90 || rotation === 270) {
-    return { effW: naturalH, effH: naturalW };
-  }
-  return { effW: naturalW, effH: naturalH };
+  // Axis-aligned bounding box of a rotated rectangle.
+  const rad = (rotation * Math.PI) / 180;
+  const cosR = Math.abs(Math.cos(rad));
+  const sinR = Math.abs(Math.sin(rad));
+  return {
+    effW: naturalW * cosR + naturalH * sinR,
+    effH: naturalW * sinR + naturalH * cosR,
+  };
 }
 
 /**

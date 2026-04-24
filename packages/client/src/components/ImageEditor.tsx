@@ -64,17 +64,26 @@ export default function ImageEditor({
   const cover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, edit.rotation);
   const displayScale = cover * edit.scale;
 
-  const rotate = () => {
-    const nextRotation = ((edit.rotation + 90) % 360) as 0 | 90 | 180 | 270;
+  const rotationCommitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextRotation = Number(e.target.value);
+    // Preserve visual size across rotation: compensate scale so displayScale
+    // (= cover × scale) is constant as cover changes with rotation.
+    const oldCover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, edit.rotation);
+    const newCover = baseCoverScale(edit.naturalWidth, edit.naturalHeight, nextRotation);
+    const nextScale = newCover > 0 ? edit.scale * (oldCover / newCover) : edit.scale;
     const clamped = clampOffset({
       naturalW: edit.naturalWidth,
       naturalH: edit.naturalHeight,
       rotation: nextRotation,
-      scale: edit.scale,
+      scale: nextScale,
       offsetX: edit.offsetX,
       offsetY: edit.offsetY,
     });
-    onUpdate({ ...edit, rotation: nextRotation, ...clamped });
+    const next = { ...edit, rotation: nextRotation, scale: nextScale, ...clamped };
+    onDragUpdate(next);
+    if (rotationCommitTimer.current) clearTimeout(rotationCommitTimer.current);
+    rotationCommitTimer.current = setTimeout(() => onUpdate(next), 150);
   };
 
   const reset = () => {
@@ -337,12 +346,22 @@ export default function ImageEditor({
         >
           {t('image.fit')}
         </button>
-        <button
-          onClick={rotate}
-          className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
-        >
-          {t('image.rotate')}
-        </button>
+        <label className="flex items-center gap-2 text-sm bg-gray-100 rounded-lg px-3 py-2">
+          <span className="text-gray-700">{t('image.rotate')}</span>
+          <input
+            type="range"
+            min={0}
+            max={360}
+            step={1}
+            value={edit.rotation}
+            onChange={onRotationChange}
+            className="w-32"
+            aria-label={t('image.rotate')}
+          />
+          <span className="font-mono text-xs text-gray-500 w-10 text-right">
+            {Math.round(edit.rotation)}°
+          </span>
+        </label>
         <button
           onClick={handleDownload}
           disabled={exporting}

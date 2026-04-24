@@ -68,6 +68,6 @@ export interface ImageEdit {
   offsetX: number;
   /** Screen-space vertical offset in source pixels. 0 = centered. */
   offsetY: number;
-  /** Quadrant rotation applied before scale, in degrees. */
-  rotation: 0 | 90 | 180 | 270;
+  /** Rotation applied before scale, in degrees. Any value 0-360 is valid. */
+  rotation: number;
 }

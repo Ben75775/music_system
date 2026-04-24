@@ -40,7 +40,7 @@
     "title": "Image editor",
     "reset": "Reset",
     "fit": "Fit to frame",
-    "rotate": "Rotate 90°",
+    "rotate": "Rotate",
     "download": "Download PNG",
     "instructions": "Drag to reposition. Scroll to zoom."
   },
