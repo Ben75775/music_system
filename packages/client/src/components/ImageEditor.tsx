@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
-import { FRAME_W, FRAME_H, baseCoverScale, clampOffset } from '../lib/image-fit';
+import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 
 interface ImageEditorProps {
@@ -77,8 +77,14 @@ export default function ImageEditor({
     onUpdate({ ...edit, rotation: nextRotation, ...clamped });
   };
 
-  const center = () => {
-    onUpdate({ ...edit, offsetX: 0, offsetY: 0 });
+  const reset = () => {
+    onUpdate({
+      ...edit,
+      rotation: 0,
+      scale: initialScale(edit.naturalWidth, edit.naturalHeight, 0),
+      offsetX: 0,
+      offsetY: 0,
+    });
   };
 
   const fit = () => {
@@ -315,10 +321,10 @@ export default function ImageEditor({
       {/* Controls row */}
       <div className="flex justify-center gap-2">
         <button
-          onClick={center}
+          onClick={reset}
           className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
         >
-          {t('image.center')}
+          {t('image.reset')}
         </button>
         <button
           onClick={fit}

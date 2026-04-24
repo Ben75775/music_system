@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FRAME_W, FRAME_H, baseCoverScale, clampOffset } from './image-fit';
+import { FRAME_W, FRAME_H, baseCoverScale, clampOffset, initialScale } from './image-fit';
 
 describe('FRAME constants', () => {
   it('are 1034 x 1379', () => {
@@ -141,5 +141,36 @@ describe('clampOffset', () => {
       offsetY: 500,
     });
     expect(r.offsetY).toBeCloseTo(344.75, 1);
+  });
+});
+
+describe('initialScale', () => {
+  it('fits large image to contain (whole image visible, letterboxed)', () => {
+    // 2000x3000 portrait into 1034x1379 frame.
+    // contain = min(1034/2000, 1379/3000) = min(0.517, 0.4597) = 0.4597.
+    // displayScale = min(1, 0.4597) = 0.4597.
+    // cover = max(0.517, 0.4597) = 0.517.
+    // initialScale = 0.4597 / 0.517 = 0.8893.
+    expect(initialScale(2000, 3000, 0)).toBeCloseTo(0.4597 / 0.517, 3);
+  });
+
+  it('keeps small image at natural pixel size', () => {
+    // 500x500 into 1034x1379: contain = 2.068, min(1, 2.068) = 1, cover = 2.758,
+    // initialScale = 1 / 2.758.
+    expect(initialScale(500, 500, 0)).toBeCloseTo(1 / 2.758, 3);
+  });
+
+  it('returns 1 when source exactly matches frame', () => {
+    // contain = 1, displayScale = 1, cover = 1, initial = 1.
+    expect(initialScale(1034, 1379, 0)).toBe(1);
+  });
+
+  it('handles rotation by swapping effective dimensions', () => {
+    // 2000x3000 rotated 90° becomes 3000x2000 effective.
+    // cover = max(1034/3000, 1379/2000) = 0.6895.
+    // contain = min(1034/3000, 1379/2000) = 0.3447.
+    // displayScale = min(1, 0.3447) = 0.3447.
+    // initialScale = 0.3447 / 0.6895 = 0.5.
+    expect(initialScale(2000, 3000, 90)).toBeCloseTo(0.5, 3);
   });
 });

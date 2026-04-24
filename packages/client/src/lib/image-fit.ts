@@ -28,6 +28,24 @@ export function baseCoverScale(
 }
 
 /**
+ * Initial scale on upload: whole image visible in the frame. For images larger
+ * than the frame this is fit-to-contain (letterboxed). For images smaller than
+ * the frame this is natural pixel size (no upscaling). Returned as a multiplier
+ * relative to `baseCoverScale` so the ImageEdit.scale field stays consistent.
+ */
+export function initialScale(
+  naturalW: number,
+  naturalH: number,
+  rotation: Rotation
+): number {
+  const cover = baseCoverScale(naturalW, naturalH, rotation);
+  const { effW, effH } = effectiveDims(naturalW, naturalH, rotation);
+  const contain = Math.min(FRAME_W / effW, FRAME_H / effH);
+  const displayScale = Math.min(1, contain);
+  return displayScale / cover;
+}
+
+/**
  * Given the current transform state, return offsets clamped so the rotated,
  * scaled image always fully covers the 1034×1379 frame (no empty regions).
  */

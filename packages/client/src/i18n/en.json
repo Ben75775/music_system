@@ -38,7 +38,7 @@
   "image": {
     "unsupportedFormat": "Only PNG, JPEG, and WebP images are supported",
     "title": "Image editor",
-    "center": "Reset position",
+    "reset": "Reset",
     "fit": "Fit to frame",
     "rotate": "Rotate 90°",
     "download": "Download PNG",

@@ -38,7 +38,7 @@
   "image": {
     "unsupportedFormat": "רק תמונות PNG, JPEG ו-WebP נתמכות",
     "title": "עורך תמונות",
-    "center": "איפוס מיקום",
+    "reset": "איפוס",
     "fit": "התאמה למסגרת",
     "rotate": "סיבוב 90°",
     "download": "הורדת PNG",
