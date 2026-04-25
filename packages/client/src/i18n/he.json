@@ -55,7 +55,13 @@
     "scrub": "מיקום בסרטון",
     "download": "הורדת PNG",
     "downloadVideo": "הורדת MP4",
-    "instructions": "גררו למיקום. גלילה לזום. סיבוב עם הסליידר. המלבן הבהיר הוא החיתוך שייוצא."
+    "instructions": "גררו למיקום. גלילה לזום. סיבוב עם הסליידר. המלבן הבהיר הוא החיתוך שייוצא.",
+    "exportModeLabel": "מצב ייצוא",
+    "exportModeFast": "מהיר (חדש)",
+    "exportModeStandard": "סטנדרטי",
+    "exportPhaseEncode": "מקודד",
+    "exportPhaseRecord": "מקליט",
+    "exportPhaseRemux": "אורז"
   },
   "youtubeThumb": {
     "title": "הורדת תמונה של סרטון יוטיוב",

@@ -55,7 +55,13 @@
     "scrub": "Scrub",
     "download": "Download PNG",
     "downloadVideo": "Download MP4",
-    "instructions": "Drag to reposition. Scroll to zoom. Rotate with the slider. The brighter rectangle is the crop that will be exported."
+    "instructions": "Drag to reposition. Scroll to zoom. Rotate with the slider. The brighter rectangle is the crop that will be exported.",
+    "exportModeLabel": "Export mode",
+    "exportModeFast": "Fast (new)",
+    "exportModeStandard": "Standard",
+    "exportPhaseEncode": "encoding",
+    "exportPhaseRecord": "recording",
+    "exportPhaseRemux": "muxing"
   },
   "youtubeThumb": {
     "title": "Download YouTube thumbnail",

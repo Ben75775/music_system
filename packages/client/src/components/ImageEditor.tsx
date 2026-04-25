@@ -4,7 +4,6 @@ import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 import { exportVideo, VIDEO_OUT_H } from '../lib/video-export';
-import { useFFmpeg } from '../hooks/useFFmpeg';
 
 interface ImageEditorProps {
   edit: ImageEdit;
@@ -35,8 +34,8 @@ export default function ImageEditor({
   const { t } = useTranslation();
   const isVideo = edit.mediaType === 'video';
 
-  const ffmpeg = useFFmpeg();
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const [exportError, setExportError] = useState<string | null>(null);
   // Live-readable flag for native (non-React) event listeners — wheel and
   // mouse/touch handlers consult this to ignore input while the export runs.
@@ -46,19 +45,14 @@ export default function ImageEditor({
   const handleDownload = async () => {
     if (exporting) return;
     setExporting(true);
+    setExportProgress(0);
     setExportError(null);
     try {
       if (isVideo) {
-        if (!ffmpeg.loaded) await ffmpeg.load();
-        // Pause the preview video so the export's source file is read fresh
-        // and we don't fight over <video> playback state.
         videoEl.current?.pause();
-        const blob = await exportVideo(edit, {
-          writeFile: ffmpeg.writeFile,
-          readFile: ffmpeg.readFile,
-          deleteFile: ffmpeg.deleteFile,
-          run: ffmpeg.run,
-        });
+        const blob = await exportVideo(edit, (ratio) =>
+          setExportProgress(Math.round(ratio * 100))
+        );
         downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.mp4`);
       } else {
         const blob = await exportImage(edit);
@@ -68,6 +62,7 @@ export default function ImageEditor({
       setExportError((e as Error).message || 'export_failed');
     } finally {
       setExporting(false);
+      setExportProgress(0);
     }
   };
 
@@ -472,11 +467,9 @@ export default function ImageEditor({
             className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
           >
             {exporting
-              ? (isVideo && ffmpeg.loading
-                  ? t('editor.loadingFFmpeg')
-                  : isVideo && ffmpeg.progress > 0
-                    ? `${t('editor.exporting')} ${ffmpeg.progress}%`
-                    : t('editor.exporting'))
+              ? isVideo
+                ? `${t('editor.exporting')} ${exportProgress}%`
+                : t('editor.exporting')
               : (isVideo ? t('image.downloadVideo') : t('image.download'))}
           </button>
         </div>
