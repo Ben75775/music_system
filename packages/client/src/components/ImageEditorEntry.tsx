@@ -84,45 +84,53 @@ export default function ImageEditorEntry({ onImageReady }: ImageEditorEntryProps
   );
 
   return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragActive(true);
-      }}
-      onDragLeave={() => setDragActive(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragActive(false);
-        const f = e.dataTransfer.files[0];
-        if (f) processFile(f);
-      }}
-      className={`w-full max-w-lg flex flex-col gap-2 p-4 rounded-2xl border transition-colors ${
-        dragActive
-          ? 'border-primary-500 bg-primary-50'
-          : 'border-gray-200 bg-white'
-      }`}
-    >
-      <p className="text-sm font-semibold text-gray-700">{t('imageEntry.title')}</p>
-      <p className="text-xs text-gray-500">{t('imageEntry.subtitle')}</p>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".png,.jpg,.jpeg,.webp,.mp4,image/png,image/jpeg,image/webp,video/mp4"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
+    <div className="w-full max-w-lg space-y-4">
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+          const f = e.dataTransfer.files[0];
           if (f) processFile(f);
         }}
-        className="hidden"
-      />
-      <button
-        type="button"
         onClick={() => fileInputRef.current?.click()}
-        disabled={loading}
-        className="px-4 py-2 text-sm rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
+        className={`
+          border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
+          ${
+            dragActive
+              ? 'border-primary-500 bg-primary-50'
+              : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+          }
+        `}
       >
-        {loading ? t('imageEntry.loading') : t('imageEntry.pick')}
-      </button>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".png,.jpg,.jpeg,.webp,.mp4,image/png,image/jpeg,image/webp,video/mp4"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) processFile(f);
+          }}
+          className="hidden"
+        />
+        <div className="text-5xl mb-4">🖼️</div>
+        <p className="text-lg font-semibold text-gray-700">{t('imageEntry.title')}</p>
+        <p className="text-sm text-gray-500 mt-1">{t('imageEntry.subtitle')}</p>
+      </div>
+
+      {error && (
+        <p className="text-red-500 text-sm text-center font-medium">{error}</p>
+      )}
+
+      {loading && (
+        <p className="text-primary-600 text-sm text-center animate-pulse">
+          {t('imageEntry.loading')}
+        </p>
+      )}
     </div>
   );
 }
