@@ -4,6 +4,7 @@ import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 import { exportVideo, VIDEO_OUT_H } from '../lib/video-export';
+import { useFFmpeg } from '../hooks/useFFmpeg';
 
 interface ImageEditorProps {
   edit: ImageEdit;
@@ -34,21 +35,31 @@ export default function ImageEditor({
   const { t } = useTranslation();
   const isVideo = edit.mediaType === 'video';
 
+  const ffmpeg = useFFmpeg();
   const [exporting, setExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
   const [exportError, setExportError] = useState<string | null>(null);
+  // Live-readable flag for native (non-React) event listeners — wheel and
+  // mouse/touch handlers consult this to ignore input while the export runs.
+  const exportingRef = useRef(false);
+  useEffect(() => { exportingRef.current = exporting; }, [exporting]);
 
   const handleDownload = async () => {
     if (exporting) return;
     setExporting(true);
-    setExportProgress(0);
     setExportError(null);
     try {
       if (isVideo) {
-        const { blob, extension } = await exportVideo(edit, (r) =>
-          setExportProgress(Math.round(r * 100))
-        );
-        downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.${extension}`);
+        if (!ffmpeg.loaded) await ffmpeg.load();
+        // Pause the preview video so the export's source file is read fresh
+        // and we don't fight over <video> playback state.
+        videoEl.current?.pause();
+        const blob = await exportVideo(edit, {
+          writeFile: ffmpeg.writeFile,
+          readFile: ffmpeg.readFile,
+          deleteFile: ffmpeg.deleteFile,
+          run: ffmpeg.run,
+        });
+        downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.mp4`);
       } else {
         const blob = await exportImage(edit);
         downloadBlob(blob, `${edit.name}_${FRAME_W}x${FRAME_H}.png`);
@@ -57,7 +68,6 @@ export default function ImageEditor({
       setExportError((e as Error).message || 'export_failed');
     } finally {
       setExporting(false);
-      setExportProgress(0);
     }
   };
 
@@ -84,6 +94,7 @@ export default function ImageEditor({
   // Ctrl+Z / Ctrl+Y keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (exportingRef.current) return;
       const el = e.target as HTMLElement;
       if (el.tagName === 'TEXTAREA') return;
       if (el.tagName === 'INPUT' && (el as HTMLInputElement).type !== 'range') return;
@@ -175,6 +186,7 @@ export default function ImageEditor({
     if (!el) return;
     const handler = (ev: WheelEvent) => {
       ev.preventDefault();
+      if (exportingRef.current) return;
       const current = editRef.current;
       const factor = Math.pow(1.0015, -ev.deltaY);
       const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, current.scale * factor));
@@ -203,6 +215,7 @@ export default function ImageEditor({
       if (!el) return () => {};
       const handler = (ev: WheelEvent) => {
         ev.preventDefault();
+        if (exportingRef.current) return;
         const delta = ev.deltaY > 0 ? -1 : 1;
         const next = apply(editRef.current, delta);
         onDragUpdate(next);
@@ -235,6 +248,7 @@ export default function ImageEditor({
 
   // Mouse pan — track drag start state, emit onDragUpdate during, onUpdate on release.
   const onMouseDown = (e: React.MouseEvent) => {
+    if (exporting) return;
     e.preventDefault();
     const startX = e.clientX;
     const startY = e.clientY;
@@ -258,6 +272,7 @@ export default function ImageEditor({
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
+    if (exporting) return;
     if (e.touches.length === 0) return;
     e.preventDefault();
 
@@ -326,13 +341,14 @@ export default function ImageEditor({
         <div className="flex items-center gap-2">
           <button
             onClick={onBack}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            disabled={exporting}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {t('editor.back')}
           </button>
           <button
             onClick={onUndo}
-            disabled={!canUndo}
+            disabled={!canUndo || exporting}
             className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Ctrl+Z"
           >
@@ -340,7 +356,7 @@ export default function ImageEditor({
           </button>
           <button
             onClick={onRedo}
-            disabled={!canRedo}
+            disabled={!canRedo || exporting}
             className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Ctrl+Y"
           >
@@ -359,7 +375,9 @@ export default function ImageEditor({
       <div className="flex justify-center w-full">
         <div
           ref={viewportRef}
-          className="relative overflow-hidden cursor-grab active:cursor-grabbing touch-none shrink-0"
+          className={`relative overflow-hidden touch-none shrink-0 ${
+            exporting ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
+          }`}
           style={{
             width: stageW,
             height: stageH,
@@ -436,13 +454,15 @@ export default function ImageEditor({
         <div className="flex justify-center gap-2">
           <button
             onClick={reset}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+            disabled={exporting}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {t('image.reset')}
           </button>
           <button
             onClick={fit}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+            disabled={exporting}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {t('image.fit')}
           </button>
@@ -452,9 +472,11 @@ export default function ImageEditor({
             className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
           >
             {exporting
-              ? (isVideo && exportProgress > 0
-                  ? `${t('editor.exporting')} ${exportProgress}%`
-                  : t('editor.exporting'))
+              ? (isVideo && ffmpeg.loading
+                  ? t('editor.loadingFFmpeg')
+                  : isVideo && ffmpeg.progress > 0
+                    ? `${t('editor.exporting')} ${ffmpeg.progress}%`
+                    : t('editor.exporting'))
               : (isVideo ? t('image.downloadVideo') : t('image.download'))}
           </button>
         </div>
@@ -464,7 +486,8 @@ export default function ImageEditor({
             <button
               type="button"
               onClick={togglePlayPause}
-              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg shrink-0 w-20"
+              disabled={exporting}
+              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg shrink-0 w-20 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {videoPlaying ? t('editor.pause') : t('editor.play')}
             </button>
@@ -475,7 +498,8 @@ export default function ImageEditor({
               step={0.05}
               value={videoTime}
               onChange={onScrub}
-              className="flex-1"
+              disabled={exporting}
+              className="flex-1 disabled:opacity-30 disabled:cursor-not-allowed"
               aria-label={t('image.scrub')}
               dir="ltr"
             />
@@ -499,7 +523,8 @@ export default function ImageEditor({
             step={1}
             value={edit.rotation}
             onChange={onRotationChange}
-            className="flex-1"
+            disabled={exporting}
+            className="flex-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.rotate')}
             dir="ltr"
           />
@@ -510,7 +535,8 @@ export default function ImageEditor({
             step={1}
             value={Math.round(edit.rotation)}
             onChange={onRotationChange}
-            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            disabled={exporting}
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.rotate')}
             dir="ltr"
           />
@@ -527,7 +553,8 @@ export default function ImageEditor({
             step={1}
             value={edit.offsetX}
             onChange={onOffsetXChange}
-            className="flex-1"
+            disabled={exporting}
+            className="flex-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.horizontal')}
             dir="ltr"
           />
@@ -536,7 +563,8 @@ export default function ImageEditor({
             step={1}
             value={Math.round(edit.offsetX)}
             onChange={onOffsetXChange}
-            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            disabled={exporting}
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.horizontal')}
             dir="ltr"
           />
@@ -553,7 +581,8 @@ export default function ImageEditor({
             step={1}
             value={edit.offsetY}
             onChange={onOffsetYChange}
-            className="flex-1"
+            disabled={exporting}
+            className="flex-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.vertical')}
             dir="ltr"
           />
@@ -562,7 +591,8 @@ export default function ImageEditor({
             step={1}
             value={Math.round(edit.offsetY)}
             onChange={onOffsetYChange}
-            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1"
+            disabled={exporting}
+            className="w-20 text-right font-mono text-sm border border-gray-300 rounded px-2 py-1 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('image.vertical')}
             dir="ltr"
           />
