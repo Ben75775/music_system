@@ -6,6 +6,7 @@ function edit(overrides: Partial<ImageEdit> = {}): ImageEdit {
   return {
     src: '',
     name: '',
+    mediaType: 'image',
     naturalWidth: 2000,
     naturalHeight: 3000,
     rotation: 0,

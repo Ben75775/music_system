@@ -1,18 +1,16 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Clip, ImageEdit } from 'shared/types';
+import type { Clip } from 'shared/types';
 import { DEFAULT_EFFECTS } from 'shared/types';
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const AV_TYPES = ['audio/mpeg', 'audio/mp3', 'video/mp4'];
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 interface FileInputProps {
   onFileReady: (track: Clip) => void;
-  onImageReady: (edit: ImageEdit) => void;
 }
 
-export default function FileInput({ onFileReady, onImageReady }: FileInputProps) {
+export default function FileInput({ onFileReady }: FileInputProps) {
   const { t } = useTranslation();
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,40 +26,6 @@ export default function FileInput({ onFileReady, onImageReady }: FileInputProps)
         return;
       }
 
-      // Image branch
-      if (file.type.startsWith('image/')) {
-        if (!IMAGE_TYPES.includes(file.type)) {
-          setError(t('image.unsupportedFormat'));
-          return;
-        }
-        setLoading(true);
-        try {
-          const url = URL.createObjectURL(file);
-          const { naturalWidth, naturalHeight } = await readImageNaturalSize(url);
-          const dot = file.name.lastIndexOf('.');
-          const name = dot > 0 ? file.name.slice(0, dot) : file.name;
-          // Upload at natural pixel size (scale=1). The editor shows the whole
-          // image with the 1034×1379 crop rectangle overlaid; user pans/zooms
-          // to position. Fit / Reset buttons let them fill the frame later.
-          onImageReady({
-            src: url,
-            name,
-            naturalWidth,
-            naturalHeight,
-            scale: 1,
-            offsetX: 0,
-            offsetY: 0,
-            rotation: 0,
-          });
-        } catch {
-          setError(t('input.invalidFile'));
-        } finally {
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Audio / video branch
       if (!AV_TYPES.includes(file.type)) {
         setError(t('input.invalidFile'));
         return;
@@ -90,7 +54,7 @@ export default function FileInput({ onFileReady, onImageReady }: FileInputProps)
         setLoading(false);
       }
     },
-    [onFileReady, onImageReady, t]
+    [onFileReady, t]
   );
 
   const handleDrop = useCallback(
@@ -131,7 +95,7 @@ export default function FileInput({ onFileReady, onImageReady }: FileInputProps)
         <input
           ref={fileInputRef}
           type="file"
-          accept=".mp3,.mp4,.png,.jpg,.jpeg,.webp,audio/mpeg,video/mp4,image/png,image/jpeg,image/webp"
+          accept=".mp3,.mp4,audio/mpeg,video/mp4"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -181,17 +145,5 @@ function readMediaMetadata(
       el.onerror = reject;
       el.src = url;
     }
-  });
-}
-
-function readImageNaturalSize(
-  url: string
-): Promise<{ naturalWidth: number; naturalHeight: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () =>
-      resolve({ naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight });
-    img.onerror = reject;
-    img.src = url;
   });
 }

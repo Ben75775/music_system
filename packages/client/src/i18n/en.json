@@ -5,13 +5,22 @@
   },
   "input": {
     "uploadTitle": "Upload a file",
-    "uploadDesc": "Drag & drop an MP3, MP4, or image file here, or click to browse",
+    "uploadDesc": "Drag & drop an MP3 or MP4 file here, or click to browse",
     "orYoutube": "Or paste a YouTube link",
     "youtubePlaceholder": "https://www.youtube.com/watch?v=...",
     "edit": "Edit",
     "loading": "Loading...",
-    "invalidFile": "Please upload an MP3, MP4, or image file",
+    "invalidFile": "Please upload an MP3 or MP4 file",
     "fileTooLarge": "File is too large (max 200MB)"
+  },
+  "imageEntry": {
+    "title": "Resolution for screen",
+    "subtitle": "Crop and rotate an image (PNG/JPEG/WebP) or an MP4 to 1034×1379. Videos are exported as MP4 at the new resolution.",
+    "pick": "Pick image or MP4",
+    "loading": "Loading…",
+    "unsupported": "Use a PNG/JPEG/WebP image or an MP4 video.",
+    "error": "Could not read that file.",
+    "videoFailed": "Could not read that video."
   },
   "editor": {
     "back": "Back",
@@ -43,8 +52,10 @@
     "rotate": "Rotate",
     "horizontal": "Horizontal",
     "vertical": "Vertical",
+    "scrub": "Scrub",
     "download": "Download PNG",
-    "instructions": "Drag the image to reposition. Scroll to zoom. Rotate with the slider. The brighter rectangle is the crop that will be exported."
+    "downloadVideo": "Download MP4",
+    "instructions": "Drag to reposition. Scroll to zoom. Rotate with the slider. The brighter rectangle is the crop that will be exported."
   },
   "youtubeThumb": {
     "title": "Download YouTube thumbnail",

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
+import { exportVideo, VIDEO_OUT_H } from '../lib/video-export';
+import { useFFmpeg } from '../hooks/useFFmpeg';
 
 interface ImageEditorProps {
   edit: ImageEdit;
@@ -31,18 +33,56 @@ export default function ImageEditor({
   canRedo,
 }: ImageEditorProps) {
   const { t } = useTranslation();
+  const isVideo = edit.mediaType === 'video';
+
+  const ffmpeg = useFFmpeg();
 
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const handleDownload = async () => {
     if (exporting) return;
     setExporting(true);
+    setExportError(null);
     try {
-      const blob = await exportImage(edit);
-      downloadBlob(blob, `${edit.name}_1034x1379.png`);
+      if (isVideo) {
+        if (!ffmpeg.loaded) await ffmpeg.load();
+        const blob = await exportVideo(edit, {
+          writeFile: ffmpeg.writeFile,
+          readFile: ffmpeg.readFile,
+          deleteFile: ffmpeg.deleteFile,
+          run: ffmpeg.run,
+        });
+        downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.mp4`);
+      } else {
+        const blob = await exportImage(edit);
+        downloadBlob(blob, `${edit.name}_${FRAME_W}x${FRAME_H}.png`);
+      }
+    } catch (e) {
+      setExportError((e as Error).message || 'export_failed');
     } finally {
       setExporting(false);
     }
+  };
+
+  // Video preview state — paused first frame; user toggles play / scrubs to
+  // pick a moment to align under the crop frame. Live currentTime keeps the
+  // scrub bar in sync while playing.
+  const videoEl = useRef<HTMLVideoElement | null>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoTime, setVideoTime] = useState(0);
+  const togglePlayPause = () => {
+    const v = videoEl.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => { /* autoplay/policy errors ignored */ });
+    else v.pause();
+  };
+  const onScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = videoEl.current;
+    if (!v) return;
+    const t = Number(e.target.value);
+    v.currentTime = t;
+    setVideoTime(t);
   };
 
   // Ctrl+Z / Ctrl+Y keyboard shortcuts
@@ -331,19 +371,37 @@ export default function ImageEditor({
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
         >
-          {/* Image — natural pixel size, same transform as the export canvas. */}
-          <img
-            src={edit.src}
-            alt=""
-            draggable={false}
-            className="absolute top-1/2 left-1/2 select-none"
-            style={{
-              width: edit.naturalWidth,
-              height: edit.naturalHeight,
-              transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
-              transformOrigin: 'center',
-            }}
-          />
+          {/* Source media — natural pixel size, same transform as the export. */}
+          {isVideo ? (
+            <video
+              ref={videoEl}
+              src={edit.src}
+              className="absolute top-1/2 left-1/2 select-none pointer-events-none"
+              style={{
+                width: edit.naturalWidth,
+                height: edit.naturalHeight,
+                transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
+                transformOrigin: 'center',
+              }}
+              playsInline
+              onPlay={() => setVideoPlaying(true)}
+              onPause={() => setVideoPlaying(false)}
+              onTimeUpdate={(e) => setVideoTime((e.target as HTMLVideoElement).currentTime)}
+            />
+          ) : (
+            <img
+              src={edit.src}
+              alt=""
+              draggable={false}
+              className="absolute top-1/2 left-1/2 select-none"
+              style={{
+                width: edit.naturalWidth,
+                height: edit.naturalHeight,
+                transform: `translate(-50%, -50%) translate(${edit.offsetX}px, ${edit.offsetY}px) rotate(${edit.rotation}deg) scale(${edit.scale})`,
+                transformOrigin: 'center',
+              }}
+            />
+          )}
           {/* Dim overlay outside the crop region */}
           <div
             style={{
@@ -397,9 +455,43 @@ export default function ImageEditor({
             disabled={exporting}
             className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
           >
-            {exporting ? t('editor.exporting') : t('image.download')}
+            {exporting
+              ? (isVideo && ffmpeg.loading
+                  ? t('editor.loadingFFmpeg')
+                  : t('editor.exporting'))
+              : (isVideo ? t('image.downloadVideo') : t('image.download'))}
           </button>
         </div>
+
+        {isVideo && edit.duration ? (
+          <div className="flex items-center gap-3 px-2">
+            <button
+              type="button"
+              onClick={togglePlayPause}
+              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg shrink-0 w-20"
+            >
+              {videoPlaying ? t('editor.pause') : t('editor.play')}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={edit.duration}
+              step={0.05}
+              value={videoTime}
+              onChange={onScrub}
+              className="flex-1"
+              aria-label={t('image.scrub')}
+              dir="ltr"
+            />
+            <span className="font-mono text-xs text-gray-500 shrink-0 w-24 text-right">
+              {formatTime(videoTime)} / {formatTime(edit.duration)}
+            </span>
+          </div>
+        ) : null}
+
+        {exportError && (
+          <p className="text-xs text-red-600 text-center">{exportError}</p>
+        )}
 
         <div className="flex items-center gap-3 px-2">
           <span className="text-sm text-gray-700 shrink-0 w-20">{t('image.rotate')}</span>
@@ -483,4 +575,12 @@ export default function ImageEditor({
       </div>
     </div>
   );
+}
+
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const total = Math.floor(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }

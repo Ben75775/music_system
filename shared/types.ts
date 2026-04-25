@@ -54,13 +54,19 @@ export const DEFAULT_EFFECTS: TrackEffect = {
 };
 
 export interface ImageEdit {
-  /** Object URL for the source image. */
+  /** Object URL for the source image or video. */
   src: string;
   /** Original filename without extension (used as export filename stem). */
   name: string;
-  /** Intrinsic width of the source image in CSS pixels. */
+  /** Image source vs. video source — picks <img>/<video> in editor and PNG vs. MP4 export. */
+  mediaType: 'image' | 'video';
+  /** Required when mediaType === 'video'. Source file for ffmpeg-side export. */
+  file?: File;
+  /** Total video duration in seconds (only set when mediaType === 'video'). */
+  duration?: number;
+  /** Intrinsic width of the source media in CSS pixels. */
   naturalWidth: number;
-  /** Intrinsic height of the source image in CSS pixels. */
+  /** Intrinsic height of the source media in CSS pixels. */
   naturalHeight: number;
   /** User zoom multiplier on top of base cover scale. 1.0 = exact cover; min 1, max 8. */
   scale: number;

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import FileInput from './components/FileInput';
 import ImageEditor from './components/ImageEditor';
+import ImageEditorEntry from './components/ImageEditorEntry';
 import ProjectView from './components/ProjectView';
 import YoutubeThumbnail from './components/YoutubeThumbnail';
 import { useHistory } from './hooks/useHistory';
@@ -48,10 +49,8 @@ export default function App() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
           <h1 className="text-4xl font-bold text-primary-700">{t('app.title')}</h1>
           <p className="text-lg text-gray-500">{t('app.subtitle')}</p>
-          <FileInput
-            onFileReady={handleFileReady}
-            onImageReady={handleImageReady}
-          />
+          <FileInput onFileReady={handleFileReady} />
+          <ImageEditorEntry onImageReady={handleImageReady} />
           <YoutubeThumbnail />
         </div>
       ) : imageEdit ? (

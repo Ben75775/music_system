@@ -5,13 +5,22 @@
   },
   "input": {
     "uploadTitle": "העלאת קובץ",
-    "uploadDesc": "גררו קובץ MP3, MP4 או תמונה לכאן, או לחצו לבחירה",
+    "uploadDesc": "גררו קובץ MP3 או MP4 לכאן, או לחצו לבחירה",
     "orYoutube": "או הדביקו לינק מיוטיוב",
     "youtubePlaceholder": "https://www.youtube.com/watch?v=...",
     "edit": "ערוך",
     "loading": "טוען...",
-    "invalidFile": "יש להעלות קובץ MP3, MP4 או תמונה",
+    "invalidFile": "יש להעלות קובץ MP3 או MP4",
     "fileTooLarge": "הקובץ גדול מדי (מקסימום 200MB)"
+  },
+  "imageEntry": {
+    "title": "רזולוציה למסך",
+    "subtitle": "חיתוך וסיבוב של תמונה (PNG/JPEG/WebP) או של MP4 לרזולוציה 1034×1379. סרטוני MP4 מיוצאים כווידאו ברזולוציה החדשה.",
+    "pick": "בחירת תמונה או MP4",
+    "loading": "טוען…",
+    "unsupported": "השתמשו בתמונת PNG/JPEG/WebP או בסרטון MP4.",
+    "error": "לא הצלחנו לקרוא את הקובץ.",
+    "videoFailed": "לא הצלחנו לקרוא את הסרטון."
   },
   "editor": {
     "back": "חזרה",
@@ -43,8 +52,10 @@
     "rotate": "סיבוב",
     "horizontal": "אופקי",
     "vertical": "אנכי",
+    "scrub": "מיקום בסרטון",
     "download": "הורדת PNG",
-    "instructions": "גררו את התמונה למיקום. גלילה לזום. סיבוב עם הסליידר. המלבן הבהיר הוא החיתוך שייוצא."
+    "downloadVideo": "הורדת MP4",
+    "instructions": "גררו למיקום. גלילה לזום. סיבוב עם הסליידר. המלבן הבהיר הוא החיתוך שייוצא."
   },
   "youtubeThumb": {
     "title": "הורדת תמונה של סרטון יוטיוב",
