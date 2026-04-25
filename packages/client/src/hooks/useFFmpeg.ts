@@ -29,6 +29,14 @@ export function useFFmpeg() {
       ffmpeg.on('progress', ({ progress }) => {
         setState((s) => ({ ...s, progress: Math.round(progress * 100) }));
       });
+      // Pipe ffmpeg stderr to the browser console so we can diagnose hangs.
+      // info-level only — fferr is verbose and would drown the console otherwise.
+      ffmpeg.on('log', ({ type, message }) => {
+        if (type === 'fferr' || type === 'info') {
+          // eslint-disable-next-line no-console
+          console.log(`[ffmpeg ${type}]`, message);
+        }
+      });
 
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
       await ffmpeg.load({

@@ -4,7 +4,6 @@ import type { ImageEdit } from 'shared/types';
 import { FRAME_W, FRAME_H } from '../lib/image-fit';
 import { exportImage, downloadBlob } from '../lib/image-export';
 import { exportVideo, VIDEO_OUT_H } from '../lib/video-export';
-import { useFFmpeg } from '../hooks/useFFmpeg';
 
 interface ImageEditorProps {
   edit: ImageEdit;
@@ -35,25 +34,21 @@ export default function ImageEditor({
   const { t } = useTranslation();
   const isVideo = edit.mediaType === 'video';
 
-  const ffmpeg = useFFmpeg();
-
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const [exportError, setExportError] = useState<string | null>(null);
 
   const handleDownload = async () => {
     if (exporting) return;
     setExporting(true);
+    setExportProgress(0);
     setExportError(null);
     try {
       if (isVideo) {
-        if (!ffmpeg.loaded) await ffmpeg.load();
-        const blob = await exportVideo(edit, {
-          writeFile: ffmpeg.writeFile,
-          readFile: ffmpeg.readFile,
-          deleteFile: ffmpeg.deleteFile,
-          run: ffmpeg.run,
-        });
-        downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.mp4`);
+        const { blob, extension } = await exportVideo(edit, (r) =>
+          setExportProgress(Math.round(r * 100))
+        );
+        downloadBlob(blob, `${edit.name}_${FRAME_W}x${VIDEO_OUT_H}.${extension}`);
       } else {
         const blob = await exportImage(edit);
         downloadBlob(blob, `${edit.name}_${FRAME_W}x${FRAME_H}.png`);
@@ -62,6 +57,7 @@ export default function ImageEditor({
       setExportError((e as Error).message || 'export_failed');
     } finally {
       setExporting(false);
+      setExportProgress(0);
     }
   };
 
@@ -456,8 +452,8 @@ export default function ImageEditor({
             className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50"
           >
             {exporting
-              ? (isVideo && ffmpeg.loading
-                  ? t('editor.loadingFFmpeg')
+              ? (isVideo && exportProgress > 0
+                  ? `${t('editor.exporting')} ${exportProgress}%`
                   : t('editor.exporting'))
               : (isVideo ? t('image.downloadVideo') : t('image.download'))}
           </button>
