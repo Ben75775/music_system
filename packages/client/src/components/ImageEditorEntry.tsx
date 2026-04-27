@@ -12,7 +12,7 @@ interface ImageEditorEntryProps {
 
 /**
  * "Resolution for screen" entry block — accepts an image or an MP4 and opens
- * the same 1080×1440 editor. Images export as PNG; videos export as MP4 with
+ * the same 1440×1080 editor. Images export as PNG; videos export as MP4 with
  * the same pan/zoom/rotate baked in (via ffmpeg).
  */
 export default function ImageEditorEntry({ onImageReady }: ImageEditorEntryProps) {

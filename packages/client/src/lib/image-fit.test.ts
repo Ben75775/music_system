@@ -18,9 +18,9 @@ function edit(overrides: Partial<ImageEdit> = {}): ImageEdit {
 }
 
 describe('FRAME constants', () => {
-  it('are 1080 x 1440', () => {
-    expect(FRAME_W).toBe(1080);
-    expect(FRAME_H).toBe(1440);
+  it('are 1440 x 1080', () => {
+    expect(FRAME_W).toBe(1440);
+    expect(FRAME_H).toBe(1080);
   });
 });
 

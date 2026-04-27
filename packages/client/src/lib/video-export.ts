@@ -14,13 +14,13 @@ export type ExportProgress = (ratio: number) => void;
 const KEYFRAME_INTERVAL = 60;
 const OUTPUT_BITRATE = 4_000_000;
 const EMPTY_BUFFER = new Uint8Array(0);
-// Tight queues — each in-flight VideoFrame at 1080×1440 holds ~6 MB of GPU
+// Tight queues — each in-flight VideoFrame at 1440×1080 holds ~6 MB of GPU
 // memory, and Chrome will kill the GPU process if too many accumulate.
 const DECODER_QUEUE_LIMIT = 4;
 const ENCODER_QUEUE_LIMIT = 2;
 
 /**
- * Export the edit as a 1080×1440 MP4. End-to-end WebCodecs pipeline, no
+ * Export the edit as a 1440×1080 MP4. End-to-end WebCodecs pipeline, no
  * ffmpeg.wasm involved:
  *
  *   1. mp4box.js demuxes the source File into encoded video samples,
@@ -117,7 +117,7 @@ export async function exportVideo(
   });
 
   videoEncoder.configure({
-    // Baseline profile level 4.1 — handles 1080×1440 30fps comfortably and
+    // Baseline profile level 4.1 — handles 1440×1080 30fps comfortably and
     // is decodable in every browser/player we care about.
     codec: 'avc1.42E029',
     width: VIDEO_OUT_W,
