@@ -15,7 +15,7 @@
   },
   "imageEntry": {
     "title": "Resolution for screen",
-    "subtitle": "Crop and rotate an image (PNG/JPEG/WebP) or an MP4 to 1034×1379. Videos are exported as MP4 at the new resolution.",
+    "subtitle": "Crop and rotate an image (PNG/JPEG/WebP) or an MP4 to 1080×1440. Videos are exported as MP4 at the new resolution.",
     "pick": "Pick image or MP4",
     "loading": "Loading…",
     "unsupported": "Use a PNG/JPEG/WebP image or an MP4 video.",

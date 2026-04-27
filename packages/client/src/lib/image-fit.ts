@@ -1,7 +1,7 @@
 import type { ImageEdit } from 'shared/types';
 
-export const FRAME_W = 1034;
-export const FRAME_H = 1379;
+export const FRAME_W = 1080;
+export const FRAME_H = 1440;
 
 /** Rotation in degrees. Any value 0-360 is valid. */
 export type Rotation = number;
@@ -9,14 +9,14 @@ export type Rotation = number;
 /**
  * Given the current image transform and the editor viewport size, return the
  * rectangle of the source image (in natural pixel coordinates, before rotation)
- * that falls inside the 1034×1379 crop frame. This is used by the export.
+ * that falls inside the 1080×1440 crop frame. This is used by the export.
  *
  * The preview is:
  *   1. Center image on viewport center.
  *   2. Translate by (offsetX, offsetY).
  *   3. Rotate by `rotation` degrees.
  *   4. Scale by `scale`.
- * The crop frame is axis-aligned at the viewport center, 1034×1379 px.
+ * The crop frame is axis-aligned at the viewport center, 1080×1440 px.
  *
  * For rotation ∈ {0, 90, 180, 270}, the source rect is a simple axis-aligned
  * rectangle. For arbitrary rotations the "source rect" is actually a rotated

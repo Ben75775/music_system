@@ -4,8 +4,9 @@ import { FRAME_W, FRAME_H } from './image-fit';
 import { demuxMp4, type DemuxedAudio } from './mp4-demuxer';
 
 // Even output dimensions — H.264 in MP4 requires even width and height.
-// FRAME_H = 1379 is odd, so we pad to 1380 with a 1px black row at the bottom.
-export const VIDEO_OUT_W = FRAME_W;
+// FRAME_W/FRAME_H are even today; the modulo guard keeps the contract if they
+// ever change to odd values.
+export const VIDEO_OUT_W = FRAME_W % 2 === 0 ? FRAME_W : FRAME_W + 1;
 export const VIDEO_OUT_H = FRAME_H % 2 === 0 ? FRAME_H : FRAME_H + 1;
 
 export type ExportProgress = (ratio: number) => void;
@@ -13,13 +14,13 @@ export type ExportProgress = (ratio: number) => void;
 const KEYFRAME_INTERVAL = 60;
 const OUTPUT_BITRATE = 4_000_000;
 const EMPTY_BUFFER = new Uint8Array(0);
-// Tight queues — each in-flight VideoFrame at 1034×1380 holds ~5 MB of GPU
+// Tight queues — each in-flight VideoFrame at 1080×1440 holds ~6 MB of GPU
 // memory, and Chrome will kill the GPU process if too many accumulate.
 const DECODER_QUEUE_LIMIT = 4;
 const ENCODER_QUEUE_LIMIT = 2;
 
 /**
- * Export the edit as a 1034×1380 MP4. End-to-end WebCodecs pipeline, no
+ * Export the edit as a 1080×1440 MP4. End-to-end WebCodecs pipeline, no
  * ffmpeg.wasm involved:
  *
  *   1. mp4box.js demuxes the source File into encoded video samples,
@@ -116,7 +117,7 @@ export async function exportVideo(
   });
 
   videoEncoder.configure({
-    // Baseline profile level 4.1 — handles 1034×1380 30fps comfortably and
+    // Baseline profile level 4.1 — handles 1080×1440 30fps comfortably and
     // is decodable in every browser/player we care about.
     codec: 'avc1.42E029',
     width: VIDEO_OUT_W,

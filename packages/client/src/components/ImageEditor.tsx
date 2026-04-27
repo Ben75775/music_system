@@ -144,7 +144,7 @@ export default function ImageEditor({
   };
 
   const fit = () => {
-    // Cover: image fills the 1034×1379 frame completely, overflow cropped.
+    // Cover: image fills the 1080×1440 frame completely, overflow cropped.
     // Use max() so the smaller image dimension matches the larger frame dim.
     const rad = (edit.rotation * Math.PI) / 180;
     const cosR = Math.abs(Math.cos(rad));

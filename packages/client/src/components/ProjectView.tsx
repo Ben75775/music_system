@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Clip, Project } from 'shared/types';
 import TrackEditor from './TrackEditor';
@@ -39,17 +39,6 @@ export default function ProjectView({
   const engine = usePlaybackEngine(project);
   const totalSize = project.clips.reduce((s, c) => s + (c.file?.size ?? 0), 0);
   const WARN_SIZE = 500 * 1024 * 1024;
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && e.target === document.body) {
-        e.preventDefault();
-        engine.toggle();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [engine]);
 
   const active = project.clips.find((c) => c.id === engine.activeClipId) ?? project.clips[0];
 
