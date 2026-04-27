@@ -16,12 +16,14 @@ export interface ExportResult {
 export async function exportProject(
   project: Project,
   deps: ExportDeps,
-  onProgress?: (pct: number) => void
+  onProgress?: (pct: number) => void,
+  loopCount: number = 1
 ): Promise<ExportResult> {
   if (project.clips.length === 0) throw new Error('empty_project');
   if (project.mode === 'video' && !project.aspect) {
     throw new Error('video_project_needs_aspect');
   }
+  const safeLoopCount = Math.max(1, Math.floor(loopCount));
 
   const ext = project.mode === 'audio' ? 'mp3' : 'mp4';
   const mime = project.mode === 'audio' ? 'audio/mpeg' : 'video/mp4';
@@ -60,24 +62,39 @@ export async function exportProject(
     bump(i + 1);
   }
 
-  const listBody = normalized.map((f) => `file '${f}'`).join('\n') + '\n';
-  await deps.writeFile('list.txt', new TextEncoder().encode(listBody));
+  // Build the concat list — each normalized clip appears once per loop iteration.
+  // For loopCount === 1 + a single clip, we can skip ffmpeg's concat pass
+  // entirely (it'd just be `-c copy` of one file, ~doubles export time for nothing).
+  const expanded: string[] = [];
+  for (let i = 0; i < safeLoopCount; i++) expanded.push(...normalized);
 
-  const outFile = `output.${ext}`;
-  try {
-    await deps.run(buildConcatArgs(normalized, outFile));
-  } catch (e) {
-    throw new Error(`concat_failed: ${(e as Error).message}`);
+  let outFile: string;
+  if (expanded.length === 1) {
+    outFile = expanded[0];
+  } else {
+    const listBody = expanded.map((f) => `file '${f}'`).join('\n') + '\n';
+    await deps.writeFile('list.txt', new TextEncoder().encode(listBody));
+
+    outFile = `output.${ext}`;
+    try {
+      await deps.run(buildConcatArgs(expanded, outFile));
+    } catch (e) {
+      throw new Error(`concat_failed: ${(e as Error).message}`);
+    }
+    await deps.deleteFile('list.txt');
   }
 
   const data = await deps.readFile(outFile);
 
-  await deps.deleteFile('list.txt');
   await deps.deleteFile(outFile);
-  for (const f of normalized) await deps.deleteFile(f);
+  for (const f of normalized) {
+    if (f !== outFile) await deps.deleteFile(f);
+  }
 
   bump(steps);
 
   const blob = new Blob([data.buffer as ArrayBuffer], { type: mime });
-  return { blob, filename: `merged.${ext}` };
+  const filename =
+    safeLoopCount > 1 ? `merged_x${safeLoopCount}.${ext}` : `merged.${ext}`;
+  return { blob, filename };
 }

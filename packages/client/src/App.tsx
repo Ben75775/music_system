@@ -7,6 +7,8 @@ import ImageEditorEntry from './components/ImageEditorEntry';
 import ProjectView from './components/ProjectView';
 import YoutubeThumbnail from './components/YoutubeThumbnail';
 import { useHistory } from './hooks/useHistory';
+import { guessAspect } from './lib/aspect';
+import { defaultCropForAspect } from './lib/crop';
 import type { Clip, ImageEdit, Project } from 'shared/types';
 
 export default function App() {
@@ -18,10 +20,27 @@ export default function App() {
 
   const handleFileReady = useCallback(
     (clip: Clip) => {
+      // For a video drop, guess an aspect from the source dimensions and
+      // apply a centered default crop — otherwise the export pipeline throws
+      // `video_project_needs_aspect` if the user clicks download without
+      // touching the aspect picker.
+      let firstClip = clip;
+      let aspect: Project['aspect'] = undefined;
+      if (clip.type === 'video' && clip.sourceWidth && clip.sourceHeight) {
+        aspect = guessAspect(clip.sourceWidth, clip.sourceHeight);
+        firstClip = {
+          ...clip,
+          crop: defaultCropForAspect(
+            { w: clip.sourceWidth, h: clip.sourceHeight },
+            aspect
+          ),
+        };
+      }
       const newProject: Project = {
         id: crypto.randomUUID(),
         mode: clip.type,
-        clips: [clip],
+        clips: [firstClip],
+        aspect,
       };
       projectHistory.reset(newProject);
     },

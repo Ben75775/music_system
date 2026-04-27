@@ -19,8 +19,11 @@ interface TrackEditorProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  /** Optional ref callback for the project playback engine. */
-  engineBind?: (el: HTMLMediaElement | null) => void;
+  /** LoopOver wiring forwarded to Controls. */
+  onLoopExport?: (count: number) => void;
+  exporting?: boolean;
+  loopBusy?: boolean;
+  loopProgress?: number;
 }
 
 export default function TrackEditor({
@@ -32,7 +35,10 @@ export default function TrackEditor({
   onRedo,
   canUndo,
   canRedo,
-  engineBind,
+  onLoopExport,
+  exporting,
+  loopBusy,
+  loopProgress,
 }: TrackEditorProps) {
   // Ctrl+Z / Ctrl+Y keyboard shortcuts
   useEffect(() => {
@@ -87,9 +93,26 @@ export default function TrackEditor({
       </div>
 
       {clip.type === 'audio' ? (
-        <AudioEditor clip={clip} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} engineBind={engineBind} />
+        <AudioEditor
+          clip={clip}
+          onUpdateClip={onUpdateClip}
+          onDragUpdateClip={onDragUpdateClip}
+          onLoopExport={onLoopExport}
+          exporting={exporting}
+          loopBusy={loopBusy}
+          loopProgress={loopProgress}
+        />
       ) : (
-        <VideoEditor clip={clip} project={project} onUpdateClip={onUpdateClip} onDragUpdateClip={onDragUpdateClip} engineBind={engineBind} />
+        <VideoEditor
+          clip={clip}
+          project={project}
+          onUpdateClip={onUpdateClip}
+          onDragUpdateClip={onDragUpdateClip}
+          onLoopExport={onLoopExport}
+          exporting={exporting}
+          loopBusy={loopBusy}
+          loopProgress={loopProgress}
+        />
       )}
     </div>
   );
@@ -101,12 +124,18 @@ function AudioEditor({
   clip,
   onUpdateClip,
   onDragUpdateClip,
-  engineBind,
+  onLoopExport,
+  exporting,
+  loopBusy,
+  loopProgress,
 }: {
   clip: Clip;
   onUpdateClip: (clip: Clip) => void;
   onDragUpdateClip: (clip: Clip) => void;
-  engineBind?: (el: HTMLMediaElement | null) => void;
+  onLoopExport?: (count: number) => void;
+  exporting?: boolean;
+  loopBusy?: boolean;
+  loopProgress?: number;
 }) {
   const { t } = useTranslation();
   const waveformRef = useRef<HTMLDivElement>(null);
@@ -201,16 +230,16 @@ function AudioEditor({
 
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
-      </div>
-
-      {engineBind && (
-        <audio
-          ref={engineBind}
-          src={clip.url}
-          style={{ display: 'none' }}
+        <Controls
+          effects={clip.effects}
+          onChange={updateEffects}
+          onDragChange={dragUpdateEffects}
+          onLoopExport={onLoopExport}
+          exporting={exporting}
+          loopBusy={loopBusy}
+          loopProgress={loopProgress}
         />
-      )}
+      </div>
     </>
   );
 }
@@ -222,13 +251,19 @@ function VideoEditor({
   project,
   onUpdateClip,
   onDragUpdateClip,
-  engineBind,
+  onLoopExport,
+  exporting,
+  loopBusy,
+  loopProgress,
 }: {
   clip: Clip;
   project: Project;
   onUpdateClip: (clip: Clip) => void;
   onDragUpdateClip: (clip: Clip) => void;
-  engineBind?: (el: HTMLMediaElement | null) => void;
+  onLoopExport?: (count: number) => void;
+  exporting?: boolean;
+  loopBusy?: boolean;
+  loopProgress?: number;
 }) {
   const { bind, isPlaying, isReady, currentTime, togglePlayPause, seekTo } =
     useVideoPlayer(clip);
@@ -272,7 +307,7 @@ function VideoEditor({
       {/* Video Player with visual fade overlay */}
       <div className="bg-black rounded-xl overflow-hidden shadow-sm relative">
         <video
-          ref={(el) => { bind(el); engineBind?.(el); }}
+          ref={bind}
           src={clip.url}
           className="w-full max-h-[400px] mx-auto"
           style={clip.crop ? cropToCss(clip.crop) : undefined}
@@ -309,7 +344,15 @@ function VideoEditor({
 
       {/* Effects */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <Controls effects={clip.effects} onChange={updateEffects} onDragChange={dragUpdateEffects} />
+        <Controls
+          effects={clip.effects}
+          onChange={updateEffects}
+          onDragChange={dragUpdateEffects}
+          onLoopExport={onLoopExport}
+          exporting={exporting}
+          loopBusy={loopBusy}
+          loopProgress={loopProgress}
+        />
       </div>
 
     </>

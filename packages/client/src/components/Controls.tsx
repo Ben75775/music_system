@@ -8,9 +8,29 @@ interface ControlsProps {
   onChange: (effects: TrackEffect) => void;
   /** Continuous slider drag -- no undo entry until release */
   onDragChange: (effects: TrackEffect) => void;
+  /** Triggers a looped export of the current clip. Hides the cell when undefined. */
+  onLoopExport?: (count: number) => void;
+  /** True while any export is in flight — disables the LoopOver button. */
+  exporting?: boolean;
+  /** True while the LoopOver button is the trigger that's still loading ffmpeg. */
+  loopBusy?: boolean;
+  /** Live progress %, only shown on the loop button when it triggered the export. */
+  loopProgress?: number;
 }
 
-export default function Controls({ effects, onChange, onDragChange }: ControlsProps) {
+const LOOP_MIN = 2;
+const LOOP_MAX = 20;
+const LOOP_DEFAULT = 2;
+
+export default function Controls({
+  effects,
+  onChange,
+  onDragChange,
+  onLoopExport,
+  exporting,
+  loopBusy,
+  loopProgress,
+}: ControlsProps) {
   const { t } = useTranslation();
 
   // Discrete: for typed input commits and dropdown
@@ -87,6 +107,70 @@ export default function Controls({ effects, onChange, onDragChange }: ControlsPr
           <option value="vocal-clarity">{t('editor.eqVocal')}</option>
           <option value="treble-boost">{t('editor.eqTreble')}</option>
         </select>
+      </div>
+
+      {/* LoopOver — repeats the edited clip back-to-back N times. */}
+      {onLoopExport && (
+        <LoopOverControl
+          onExport={onLoopExport}
+          exporting={!!exporting}
+          loopBusy={!!loopBusy}
+          loopProgress={loopProgress ?? 0}
+        />
+      )}
+    </div>
+  );
+}
+
+function LoopOverControl({
+  onExport,
+  exporting,
+  loopBusy,
+  loopProgress,
+}: {
+  onExport: (count: number) => void;
+  exporting: boolean;
+  loopBusy: boolean;
+  loopProgress: number;
+}) {
+  const { t } = useTranslation();
+  const [count, setCount] = useState(LOOP_DEFAULT);
+
+  const clamp = (n: number) => Math.max(LOOP_MIN, Math.min(LOOP_MAX, n));
+  const disabled = exporting;
+
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-gray-600">
+        {t('editor.loopOver')}
+      </label>
+      <div className="flex gap-1">
+        <input
+          type="number"
+          min={LOOP_MIN}
+          max={LOOP_MAX}
+          value={count}
+          onChange={(e) => {
+            const parsed = parseInt(e.target.value, 10);
+            if (!isNaN(parsed)) setCount(clamp(parsed));
+          }}
+          disabled={disabled}
+          className="w-16 px-2 py-2 border border-gray-300 rounded-lg bg-white text-sm text-center disabled:bg-gray-100 disabled:text-gray-400"
+        />
+        <button
+          type="button"
+          onClick={() => onExport(clamp(count))}
+          disabled={disabled}
+          className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            disabled
+              ? 'bg-gray-200 text-gray-500 cursor-wait'
+              : 'bg-primary-600 hover:bg-primary-700 text-white'
+          }`}
+        >
+          {loopBusy
+            ? `${t('editor.exporting')} ${loopProgress}%`
+            : `🔁 ${t('editor.loopGo')}`}
+        </button>
       </div>
     </div>
   );

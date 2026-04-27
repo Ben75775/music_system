@@ -42,7 +42,9 @@
     "exporting": "מעבד...",
     "loadingFFmpeg": "טוען מנוע עריכה...",
     "ready": "מוכן",
-    "advancedEditor": "צריכים עוד כלים? →"
+    "advancedEditor": "צריכים עוד כלים? →",
+    "loopOver": "🔁 לולאה (מספר חזרות)",
+    "loopGo": "הורדה בלולאה"
   },
   "image": {
     "unsupportedFormat": "רק תמונות PNG, JPEG ו-WebP נתמכות",
@@ -73,12 +75,6 @@
     "error": "לא הצלחנו להוריד את התמונה. בדקו את הלינק ואת החיבור."
   },
   "project": {
-    "empty": "אין קליפים בפרויקט",
-    "clipListPlaceholder": "רשימת קליפים (בקרוב)",
-    "addClipFile": "הוספת קובץ",
-    "removeClip": "הסרת קליפ",
-    "audioOnly": "פרויקט אודיו מקבל רק קובצי MP3",
-    "videoOnly": "פרויקט וידאו מקבל רק קובצי MP4",
     "discardConfirm": "למחוק את הפרויקט ולהתחיל מחדש?",
     "sizeWarning": "הפרויקט גדול. הייצוא עלול להיות איטי או להיכשל בזיכרון."
   },

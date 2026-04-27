@@ -42,7 +42,9 @@
     "exporting": "Processing...",
     "loadingFFmpeg": "Loading editor engine...",
     "ready": "Ready",
-    "advancedEditor": "Need more tools? →"
+    "advancedEditor": "Need more tools? →",
+    "loopOver": "🔁 LoopOver (count)",
+    "loopGo": "Loop & download"
   },
   "image": {
     "unsupportedFormat": "Only PNG, JPEG, and WebP images are supported",
@@ -73,12 +75,6 @@
     "error": "Could not fetch the thumbnail. Check the URL and your connection."
   },
   "project": {
-    "empty": "Project has no clips",
-    "clipListPlaceholder": "Clip list (coming soon)",
-    "addClipFile": "Add file to project",
-    "removeClip": "Remove clip",
-    "audioOnly": "Audio projects only accept MP3 files",
-    "videoOnly": "Video projects only accept MP4 files",
     "discardConfirm": "Discard this project and start over?",
     "sizeWarning": "This project is large. Export may be slow or may run out of memory."
   },
